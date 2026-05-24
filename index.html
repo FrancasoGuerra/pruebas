@@ -1,0 +1,1970 @@
+/* ==========================================================================
+   QUANTUM RESONANCE CORE - MOTOR LÓGICO COMPLETO
+   ========================================================================== */
+// --- Global App State ---
+const state = {
+    initialized: false,
+    theme: 'plasma', // 'plasma', 'darkmatter', 'fusion'
+    speed: 1.2,
+    density: 25000,
+    instability: 18,
+    humEnabled: true,
+    sfxEnabled: true,
+    volume: 0.6,
+    alertActive: false,
+    particlesCount: 25000
+};
+// --- Color Palettes ---
+const themes = {
+    plasma: {
+        primary: '#00f3ff',
+        secondary: '#0044ff',
+        glow: 'rgba(0, 243, 255, 0.5)',
+        coreParticle: '#ffffff',
+        pulseColor: '#00f3ff'
+    },
+    darkmatter: {
+        primary: '#bd00ff',
+        secondary: '#ff007a',
+        glow: 'rgba(189, 0, 255, 0.5)',
+        coreParticle: '#ffffff',
+        pulseColor: '#bd00ff'
+    },
+    fusion: {
+        primary: '#ffaa00',
+        secondary: '#ff3c00',
+        glow: 'rgba(255, 170, 0, 0.5)',
+        coreParticle: '#ffffff',
+        pulseColor: '#ffaa00'
+    }
+};
+// --- Three.js Variables ---
+let scene, camera, renderer, controls;
+let corePoints, coreGeometry, coreMaterial;
+let ring1, ring2, ring3;
+let spaceDust;
+let pulsePoints = [], pulseGeometries = [], pulseMaterials = [];
+let pointLight1, pointLight2;
+const particleTextureCache = {};
+// --- Web Audio API Variables ---
+let audioCtx;
+let masterGainNode;
+let analyser;
+let humOscCarrier, humOscModulator, humModGain;
+let humFilter;
+let alarmIntervalId = null;
+// --- Oscilloscope Variables ---
+let oscilloscopeCanvas, oscilloscopeCtx;
+// --- DOM Elements ---
+const DOM = {
+    splash: document.getElementById('splashScreen'),
+    initializeBtn: document.getElementById('initializeBtn'),
+    clock: document.getElementById('systemClock'),
+    
+    // Sliders
+    sldSpeed: document.getElementById('sldSpeed'),
+    lblSpeed: document.getElementById('lblSpeed'),
+    sldDensity: document.getElementById('sldDensity'),
+    lblDensity: document.getElementById('lblDensity'),
+    sldInstability: document.getElementById('sldInstability'),
+    lblInstability: document.getElementById('lblInstability'),
+    sldVolume: document.getElementById('sldVolume'),
+    lblVolume: document.getElementById('lblVolume'),
+    
+    // Audio toggles
+    chkHum: document.getElementById('chkHum'),
+    chkSfx: document.getElementById('chkSfx'),
+    
+    // Core telemetry values
+    valRotSpeed: document.getElementById('valRotSpeed'),
+    valPower: document.getElementById('valPower'),
+    valTemp: document.getElementById('valTemp'),
+    valParticles: document.getElementById('valParticles'),
+    
+    // Containment meters
+    barContainment: document.getElementById('barContainment'),
+    txtBarContainment: document.getElementById('txtBarContainment'),
+    barFrequency: document.getElementById('barFrequency'),
+    txtBarFrequency: document.getElementById('txtBarFrequency'),
+    barCooling: document.getElementById('barCooling'),
+    txtBarCooling: document.getElementById('txtBarCooling'),
+    
+    // Triggers
+    btnPulse: document.getElementById('btnPulse'),
+    statusLight: document.getElementById('statusLight'),
+    consoleFeed: document.getElementById('consoleFeed')
+};
+// ==========================================================================
+// 1. INITIALIZATION & OVERLAYS
+// ==========================================================================
+// Add a line to our futuristic console log
+function logMessage(section, text, isAlert = false) {
+    const timestamp = `[${new Date().toLocaleTimeString()}.${String(Date.now() % 1000).padStart(3, '0')}]`;
+    const line = document.createElement('div');
+    line.className = 'console-line';
+    if (isAlert) line.style.color = 'var(--clr-danger)';
+    
+    line.innerHTML = `
+        <span class="timestamp">${timestamp}</span>
+        <span class="message"><strong style="color:var(--clr-primary)">${section}</strong>: ${text}</span>
+    `;
+    
+    DOM.consoleFeed.appendChild(line);
+    // Keep only last 10 lines
+    while (DOM.consoleFeed.children.length > 5) {
+        DOM.consoleFeed.removeChild(DOM.consoleFeed.firstChild);
+    }
+    DOM.consoleFeed.scrollTop = DOM.consoleFeed.scrollHeight;
+}
+// System Clock Updater
+function updateClock() {
+    const now = new Date();
+    const ms = String(now.getMilliseconds()).padStart(3, '0');
+    DOM.clock.textContent = `${now.toLocaleTimeString()}.${ms}`;
+}
+setInterval(updateClock, 33);
+// Initialize interaction
+DOM.initializeBtn.addEventListener('click', () => {
+    initAudio();
+    initThree();
+    
+    DOM.splash.classList.add('hidden');
+    state.initialized = true;
+    
+    logMessage('SYSTEM', 'Reactor encendido. Moduladores cuánticos activados.');
+    logMessage('AUDIO', 'Síntesis de sonido iniciada. Zumbido Core en línea.');
+    
+    // Start drawing audio oscilloscope
+    drawOscilloscope();
+    
+    // Play greeting SFX
+    playSfx('pulse');
+});
+// ==========================================================================
+// 2. WEB AUDIO API SYNTHESIZER
+// ==========================================================================
+function initAudio() {
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        
+        // Master Gain
+        masterGainNode = audioCtx.createGain();
+        masterGainNode.gain.setValueAtTime(state.volume * 0.3, audioCtx.currentTime); // keep a bit quiet by default
+        
+        // Analyser node for oscilloscope
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 1024;
+        
+        // Route: Master -> Analyser -> Output
+        masterGainNode.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        
+        // --- Core Hum Synth Setup ---
+        // Carrier oscillator (deep rumble)
+        humOscCarrier = audioCtx.createOscillator();
+        humOscCarrier.type = 'triangle';
+        humOscCarrier.frequency.setValueAtTime(55, audioCtx.currentTime); // A1 frequency
+        
+        // Modulator oscillator (pulsating effect)
+        humOscModulator = audioCtx.createOscillator();
+        humOscModulator.type = 'sine';
+        humOscModulator.frequency.setValueAtTime(5.8, audioCtx.currentTime); // 5.8 Hz LFO
+        
+        // Gain to control modulation depth
+        humModGain = audioCtx.createGain();
+        humModGain.gain.setValueAtTime(8, audioCtx.currentTime); // oscillates frequency by 8Hz
+        
+        // Lowpass Filter to make the sound warm and muffled
+        humFilter = audioCtx.createBiquadFilter();
+        humFilter.type = 'lowpass';
+        humFilter.frequency.setValueAtTime(140, audioCtx.currentTime);
+        humFilter.Q.setValueAtTime(4.0, audioCtx.currentTime); // nice resonate bump
+        
+        // Connections for Hum FM Synthesis:
+        // Modulator -> ModGain -> Carrier Frequency
+        humOscModulator.connect(humModGain);
+        humModGain.connect(humOscCarrier.frequency);
+        
+        // Carrier -> Filter -> Master Gain
+        humOscCarrier.connect(humFilter);
+        
+        // Gain Node to toggle hum on/off cleanly
+        state.humGain = audioCtx.createGain();
+        state.humGain.gain.setValueAtTime(state.humEnabled ? 0.8 : 0, audioCtx.currentTime);
+        humFilter.connect(state.humGain);
+        state.humGain.connect(masterGainNode);
+        
+        // Start Oscillators
+        humOscCarrier.start();
+        humOscModulator.start();
+        
+        // Set up Oscilloscope canvas
+        oscilloscopeCanvas = document.getElementById('oscilloscope');
+        oscilloscopeCtx = oscilloscopeCanvas.getContext('2d');
+        resizeOscilloscope();
+        window.addEventListener('resize', resizeOscilloscope);
+        
+    } catch(e) {
+        console.error('Web Audio API not supported in this browser.', e);
+    }
+}
+// Adjust Audio Hum Pitch/Speed according to speed slider
+function updateAudioHum() {
+    if (!audioCtx) return;
+    
+    // Base frequency is related to core speed (55Hz * speed scale)
+    const baseFreq = 35 + (state.speed * 20); // 37Hz to 115Hz range
+    // Modulator speed scales with core speed to sound faster
+    const modFreq = 3.5 + (state.speed * 2);
+    // Mod depth increases with speed and instability to sound more aggressive
+    const modDepth = 5 + (state.speed * 4) + (state.instability * 0.15);
+    
+    // Filter frequency opens up with speed
+    const filterFreq = 100 + (state.speed * 50) + (state.instability * 0.5);
+    
+    // Safe scheduling
+    const t = audioCtx.currentTime;
+    humOscCarrier.frequency.setTargetAtTime(baseFreq, t, 0.1);
+    humOscModulator.frequency.setTargetAtTime(modFreq, t, 0.1);
+    humModGain.gain.setTargetAtTime(modDepth, t, 0.1);
+    humFilter.frequency.setTargetAtTime(filterFreq, t, 0.15);
+    
+    // If instability is high, introduce slight detuning to represent stress
+    if (state.instability > 50) {
+        const detuneAmount = (state.instability - 50) * 0.6;
+        humOscCarrier.detune.setTargetAtTime((Math.random() - 0.5) * detuneAmount, t, 0.05);
+    } else {
+        humOscCarrier.detune.setTargetAtTime(0, t, 0.1);
+    }
+}
+// Play synthesizer short sound effects
+function playSfx(type) {
+    if (!audioCtx || !state.sfxEnabled) return;
+    
+    const t = audioCtx.currentTime;
+    
+    if (type === 'hover') {
+        // High soft blip
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(900, t);
+        osc.frequency.exponentialRampToValueAtTime(1400, t + 0.08);
+        
+        gain.gain.setValueAtTime(0.015, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+        
+        osc.connect(gain);
+        gain.connect(masterGainNode);
+        
+        osc.start(t);
+        osc.stop(t + 0.09);
+    }
+    else if (type === 'click') {
+        // Futuristic UI click
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(600, t);
+        osc.frequency.setValueAtTime(300, t + 0.02);
+        
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+        
+        osc.connect(gain);
+        gain.connect(masterGainNode);
+        
+        osc.start(t);
+        osc.stop(t + 0.07);
+    }
+    else if (type === 'pulse') {
+        // Powerful sweep representing energy discharge
+        const osc = audioCtx.createOscillator();
+        const oscSub = audioCtx.createOscillator();
+        const filter = audioCtx.createBiquadFilter();
+        const gain = audioCtx.createGain();
+        
+        // High sweep
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, t);
+        osc.frequency.exponentialRampToValueAtTime(1200, t + 0.4);
+        
+        // Low punch
+        oscSub.type = 'sine';
+        oscSub.frequency.setValueAtTime(80, t);
+        oscSub.frequency.exponentialRampToValueAtTime(35, t + 0.6);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(250, t);
+        filter.frequency.exponentialRampToValueAtTime(1800, t + 0.2);
+        filter.frequency.exponentialRampToValueAtTime(80, t + 0.6);
+        
+        gain.gain.setValueAtTime(0.25, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+        
+        osc.connect(filter);
+        oscSub.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGainNode);
+        
+        osc.start(t);
+        oscSub.start(t);
+        osc.stop(t + 0.7);
+        oscSub.stop(t + 0.7);
+    }
+}
+// Alarm loop logic for critical instability
+function startAlarm() {
+    if (alarmIntervalId || !audioCtx) return;
+    
+    logMessage('ALERT', 'INESTABILIDAD CRÍTICA. Alarma de sobrecarga activada.', true);
+    
+    alarmIntervalId = setInterval(() => {
+        if (!state.sfxEnabled) return;
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(580, t);
+        osc.frequency.linearRampToValueAtTime(400, t + 0.35);
+        
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+        
+        // Simple low pass filter to make alarm sound a bit sci-fi
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(900, t);
+        
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(masterGainNode);
+        
+        osc.start(t);
+        osc.stop(t + 0.4);
+    }, 500);
+}
+function stopAlarm() {
+    if (!alarmIntervalId) return;
+    clearInterval(alarmIntervalId);
+    alarmIntervalId = null;
+    logMessage('SYSTEM', 'Estabilidad restaurada. Alarma desactivada.');
+}
+// ==========================================================================
+// 3. THREE.JS 3D GRAPHICS MOTOR
+// ==========================================================================
+// Helper: Generates smooth radial glowing particle textures procedural
+function getParticleTexture(colorHex) {
+    if (particleTextureCache[colorHex]) {
+        return particleTextureCache[colorHex];
+    }
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    
+    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.2, '#ffffff');
+    grad.addColorStop(0.4, colorHex);
+    grad.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    particleTextureCache[colorHex] = texture;
+    return texture;
+}
+function initThree() {
+    const container = document.getElementById('canvas3d');
+    
+    // Scene
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2('#03060f', 0.04);
+    
+    // Camera
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 4, 11);
+    
+    // Renderer
+    renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
+    // Controls
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxDistance = 25;
+    controls.minDistance = 4;
+    
+    // Lights (Theme-colored lighting in 3D space)
+    const currentTheme = themes[state.theme];
+    
+    pointLight1 = new THREE.PointLight(currentTheme.primary, 3, 20);
+    pointLight1.position.set(2, 3, 2);
+    scene.add(pointLight1);
+    
+    pointLight2 = new THREE.PointLight(currentTheme.secondary, 2, 25);
+    pointLight2.position.set(-3, -2, -3);
+    scene.add(pointLight2);
+    
+    const ambientLight = new THREE.AmbientLight('#111c3a', 0.8);
+    scene.add(ambientLight);
+    
+    // Build Core & Orbital Rings
+    buildQuantumCore();
+    buildOrbitalRings();
+    buildSpaceDust();
+    
+    // Loop
+    renderer.setAnimationLoop(renderLoop);
+    
+    // Resize listener
+    window.addEventListener('resize', onWindowResize);
+}
+// Build Core Sphere Particles
+function buildQuantumCore() {
+    if (corePoints) scene.remove(corePoints);
+    
+    const particleCount = state.density;
+    coreGeometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const initialPositions = []; // Store to animate floating effect
+    
+    for (let i = 0; i < particleCount; i++) {
+        // Fibonnaci spiral sphere layout + noise
+        const u = Math.random();
+        const v = Math.random();
+        const theta = u * 2.0 * Math.PI;
+        const phi = Math.acos(2.0 * v - 1.0);
+        
+        // Core radius between 1.6 and 2.2
+        const r = 1.6 + Math.random() * 0.6;
+        
+        const x = r * Math.sin(phi) * Math.cos(theta);
+        const y = r * Math.sin(phi) * Math.sin(theta);
+        const z = r * Math.cos(phi);
+        
+        positions[i * 3] = x;
+        positions[i * 3 + 1] = y;
+        positions[i * 3 + 2] = z;
+        
+        initialPositions.push({x, y, z, speed: 0.5 + Math.random() * 2});
+    }
+    
+    coreGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    coreGeometry.userData = { initialPositions };
+    
+    const currentTheme = themes[state.theme];
+    coreMaterial = new THREE.PointsMaterial({
+        size: 0.08,
+        map: getParticleTexture(currentTheme.primary),
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    
+    corePoints = new THREE.Points(coreGeometry, coreMaterial);
+    scene.add(corePoints);
+}
+// Build Magnetic Containment Rings
+function buildOrbitalRings() {
+    if (ring1) scene.remove(ring1);
+    if (ring2) scene.remove(ring2);
+    if (ring3) scene.remove(ring3);
+    
+    const themeInfo = themes[state.theme];
+    const ringTex = getParticleTexture(themeInfo.secondary);
+    
+    const createRing = (radius, count) => {
+        const geom = new THREE.BufferGeometry();
+        const pos = new Float32Array(count * 3);
+        
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2;
+            // Add tiny displacement noise
+            const noise = (Math.random() - 0.5) * 0.15;
+            pos[i * 3] = (radius + noise) * Math.cos(angle);
+            pos[i * 3 + 1] = (Math.random() - 0.5) * 0.1;
+            pos[i * 3 + 2] = (radius + noise) * Math.sin(angle);
+        }
+        geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const mat = new THREE.PointsMaterial({
+            size: 0.1,
+            map: ringTex,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        return new THREE.Points(geom, mat);
+    };
+    
+    // Generate rings with different radius sizes
+    ring1 = createRing(3.2, 400);
+    ring2 = createRing(4.2, 600);
+    ring3 = createRing(5.2, 800);
+    
+    // Orientate rings to look like a complex gyroscope cage
+    ring1.rotation.x = Math.PI / 4;
+    ring2.rotation.z = Math.PI / 3;
+    ring3.rotation.y = -Math.PI / 6;
+    
+    scene.add(ring1);
+    scene.add(ring2);
+    scene.add(ring3);
+}
+// Background spatial quantum dust
+function buildSpaceDust() {
+    if (spaceDust) scene.remove(spaceDust);
+    
+    const count = 1800;
+    const geom = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    
+    for(let i=0; i<count; i++) {
+        // Scattered in a sphere between radius 12 and 40
+        const r = 12 + Math.random() * 28;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        
+        pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+        pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+        pos[i*3+2] = r * Math.cos(phi);
+    }
+    
+    geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    
+    const mat = new THREE.PointsMaterial({
+        size: 0.07,
+        map: getParticleTexture('#ffffff'),
+        transparent: true,
+        opacity: 0.4,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    
+    spaceDust = new THREE.Points(geom, mat);
+    scene.add(spaceDust);
+}
+// Dynamic plasma explosion burst wave
+function triggerQuantumPulse() {
+    playSfx('pulse');
+    logMessage('CORE', 'PULSO CUÁNTICO EMITIDO. Dispersión térmica instantánea: +80 K.');
+    
+    // Add brief instability wave
+    const prevInstability = state.instability;
+    state.instability = Math.min(100, state.instability + 15);
+    DOM.sldInstability.value = state.instability;
+    DOM.lblInstability.textContent = `${state.instability}%`;
+    updateCoreMetrics();
+    updateAudioHum();
+    
+    // Return instability back slowly
+    setTimeout(() => {
+        state.instability = prevInstability;
+        DOM.sldInstability.value = state.instability;
+        DOM.lblInstability.textContent = `${state.instability}%`;
+        updateCoreMetrics();
+        updateAudioHum();
+    }, 2000);
+    
+    // Create new shockwave geometry
+    const pulseCount = 3000;
+    const geom = new THREE.BufferGeometry();
+    const positions = new Float32Array(pulseCount * 3);
+    const directions = [];
+    
+    for (let i = 0; i < pulseCount; i++) {
+        const u = Math.random();
+        const v = Math.random();
+        const theta = u * 2.0 * Math.PI;
+        const phi = Math.acos(2.0 * v - 1.0);
+        
+        // Directed vector from core center outwards
+        const vx = Math.sin(phi) * Math.cos(theta);
+        const vy = Math.sin(phi) * Math.sin(theta);
+        const vz = Math.cos(phi);
+        
+        // Spawn at outer border of core sphere
+        positions[i * 3] = vx * 2.0;
+        positions[i * 3 + 1] = vy * 2.0;
+        positions[i * 3 + 2] = vz * 2.0;
+        
+        directions.push({x: vx, y: vy, z: vz, speed: 6 + Math.random() * 8});
+    }
+    
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const themeInfo = themes[state.theme];
+    const mat = new THREE.PointsMaterial({
+        size: 0.12,
+        map: getParticleTexture(themeInfo.primary),
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        opacity: 0.9
+    });
+    
+    const pulseObj = new THREE.Points(geom, mat);
+    scene.add(pulseObj);
+    
+    pulsePoints.push({
+        mesh: pulseObj,
+        directions,
+        age: 0,
+        maxAge: 80 // frames
+    });
+}
+// 3D Rendering & Animation Frame
+function renderLoop(time) {
+    const elapsed = time * 0.001; // convert to seconds
+    
+    // Camera orbital controls update
+    controls.update();
+    
+    // Core rotation speeds
+    const rotSpeed = state.speed * 0.15;
+    
+    if (corePoints) {
+        // Base rotate
+        corePoints.rotation.y = elapsed * rotSpeed;
+        corePoints.rotation.x = elapsed * rotSpeed * 0.4;
+        
+        // Warp core coordinates dynamically to simulate core resonance
+        const posAttr = coreGeometry.attributes.position;
+        const initial = coreGeometry.userData.initialPositions;
+        
+        // Noise frequency based on speed and instability
+        const noiseFreq = 2.0 + (state.speed * 1.5) + (state.instability * 0.04);
+        const noiseAmp = 0.05 + (state.instability * 0.004);
+        
+        for (let i = 0; i < state.density; i++) {
+            const idx = i * 3;
+            const init = initial[i];
+            
+            // Generate mathematical wave deformation based on particle coordinate
+            const wave = Math.sin(elapsed * noiseFreq + init.x * 2.0 + init.y * 2.0) * noiseAmp;
+            
+            posAttr.array[idx] = init.x + init.x * wave;
+            posAttr.array[idx + 1] = init.y + init.y * wave;
+            posAttr.array[idx + 2] = init.z + init.z * wave;
+        }
+        posAttr.needsUpdate = true;
+    }
+    
+    // Animate orbital rings
+    if (ring1) {
+        ring1.rotation.y = -elapsed * rotSpeed * 1.8;
+        ring2.rotation.x = elapsed * rotSpeed * 1.3;
+        ring3.rotation.z = -elapsed * rotSpeed * 0.9;
+    }
+    
+    // Space dust slow movement
+    if (spaceDust) {
+        spaceDust.rotation.y = elapsed * 0.01;
+    }
+    
+    // Animate active plasma pulse explosions
+    for (let p = pulsePoints.length - 1; p >= 0; p--) {
+        const pulse = pulsePoints[p];
+        pulse.age++;
+        
+        if (pulse.age >= pulse.maxAge) {
+            scene.remove(pulse.mesh);
+            pulse.mesh.geometry.dispose();
+            pulse.mesh.material.dispose();
+            pulsePoints.splice(p, 1);
+            continue;
+        }
+        
+        const posAttr = pulse.mesh.geometry.attributes.position;
+        const dirs = pulse.directions;
+        const opacityScale = 1.0 - (pulse.age / pulse.maxAge);
+        pulse.mesh.material.opacity = opacityScale;
+        
+        for (let i = 0; i < posAttr.count; i++) {
+            const idx = i * 3;
+            const dir = dirs[i];
+            
+            // Move outwards along direction vector
+            posAttr.array[idx] += dir.x * dir.speed * 0.015;
+            posAttr.array[idx + 1] += dir.y * dir.speed * 0.015;
+            posAttr.array[idx + 2] += dir.z * dir.speed * 0.015;
+        }
+        posAttr.needsUpdate = true;
+    }
+    
+    // Animate dynamic floating point lights in center area
+    if (pointLight1 && pointLight2) {
+        const amp = 3.0;
+        pointLight1.position.x = Math.sin(elapsed * 1.5) * amp;
+        pointLight1.position.z = Math.cos(elapsed * 1.2) * amp;
+        
+        pointLight2.position.y = Math.cos(elapsed * 1.8) * amp;
+        pointLight2.position.x = Math.sin(elapsed * 0.9) * amp;
+        
+        // Critical emergency red flickering lights if alert state is active
+        if (state.alertActive) {
+            const flicker = Math.random() > 0.3 ? 6.0 : 0.5;
+            pointLight1.color.setHex(0xff0044);
+            pointLight1.intensity = flicker;
+            pointLight2.color.setHex(0xff0000);
+            pointLight2.intensity = flicker * 0.5;
+        } else {
+            const theme = themes[state.theme];
+            pointLight1.color.set(theme.primary);
+            pointLight1.intensity = 3.0;
+            pointLight2.color.set(theme.secondary);
+            pointLight2.intensity = 2.0;
+        }
+    }
+    
+    renderer.render(scene, camera);
+}
+function onWindowResize() {
+    if (!renderer) return;
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+// Regenerate elements to match new styling theme colors
+function updateThreeTheme() {
+    if (!scene) return;
+    
+    const currentTheme = themes[state.theme];
+    
+    // Rebuild core and rings with new colors
+    buildQuantumCore();
+    buildOrbitalRings();
+    
+    // Update lights color
+    pointLight1.color.set(currentTheme.primary);
+    pointLight2.color.set(currentTheme.secondary);
+}
+// ==========================================================================
+// 4. REAL-TIME TELEMETRY & OSCILLOSCOPE DRAWING
+// ==========================================================================
+function resizeOscilloscope() {
+    if (!oscilloscopeCanvas) return;
+    const rect = oscilloscopeCanvas.parentElement.getBoundingClientRect();
+    oscilloscopeCanvas.width = rect.width;
+    oscilloscopeCanvas.height = rect.height;
+}
+// Oscilloscope graph loop
+function drawOscilloscope() {
+    requestAnimationFrame(drawOscilloscope);
+    if (!analyser || !oscilloscopeCtx) return;
+    
+    const width = oscilloscopeCanvas.width;
+    const height = oscilloscopeCanvas.height;
+    
+    // Read audio wave data buffer
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+    
+    // Dark transparent bg
+    oscilloscopeCtx.fillStyle = 'rgba(3, 6, 15, 0.4)';
+    oscilloscopeCtx.fillRect(0, 0, width, height);
+    
+    // Grid lines for oscilloscope
+    oscilloscopeCtx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    oscilloscopeCtx.lineWidth = 1;
+    
+    // Horizontal center line
+    oscilloscopeCtx.beginPath();
+    oscilloscopeCtx.moveTo(0, height / 2);
+    oscilloscopeCtx.lineTo(width, height / 2);
+    oscilloscopeCtx.stroke();
+    
+    // Vertical grid dashes
+    for (let x = 40; x < width; x += 40) {
+        oscilloscopeCtx.beginPath();
+        oscilloscopeCtx.moveTo(x, 0);
+        oscilloscopeCtx.lineTo(x, height);
+        oscilloscopeCtx.stroke();
+    }
+    
+    // Waveform line styling
+    const theme = themes[state.theme];
+    oscilloscopeCtx.lineWidth = 2.5;
+    
+    if (state.alertActive) {
+        oscilloscopeCtx.strokeStyle = '#ff0055';
+        oscilloscopeCtx.shadowColor = '#ff0055';
+    } else {
+        oscilloscopeCtx.strokeStyle = theme.primary;
+        oscilloscopeCtx.shadowColor = theme.primary;
+    }
+    oscilloscopeCtx.shadowBlur = 8;
+    
+    oscilloscopeCtx.beginPath();
+    const sliceWidth = width * 1.0 / bufferLength;
+    let x = 0;
+    
+    for (let i = 0; i < bufferLength; i++) {
+        // Convert audio value (0-255) to canvas height scale
+        const v = dataArray[i] / 128.0;
+        let y = v * height / 2;
+        
+        // If audio zumbido is disabled and no SFX is playing, draw flat line with tiny noise
+        if (!state.humEnabled && analyser.getByteFrequencyData) {
+            y = (height / 2) + (Math.random() - 0.5) * 1.5;
+        }
+        
+        if (i === 0) {
+            oscilloscopeCtx.moveTo(x, y);
+        } else {
+            oscilloscopeCtx.lineTo(x, y);
+        }
+        
+        x += sliceWidth;
+    }
+    
+    oscilloscopeCtx.lineTo(width, height / 2);
+    oscilloscopeCtx.stroke();
+    
+    // Reset shadow blur
+    oscilloscopeCtx.shadowBlur = 0;
+}
+// Generate organic telemetric data fluctuations
+function updateCoreMetrics() {
+    // 1. Rotation speed value
+    DOM.valRotSpeed.innerHTML = `${state.speed.toFixed(2)} <span class="stat-unit">rad/s</span>`;
+    
+    // 2. Power formula (GW) = speed * 350 + instability * 5 + random noise
+    const basePower = (state.speed * 340) + (state.instability * 4);
+    const noisePower = (Math.random() - 0.5) * 6;
+    const finalPower = Math.max(0, basePower + noisePower);
+    DOM.valPower.innerHTML = `${finalPower.toFixed(1)} <span class="stat-unit">GW</span>`;
+    
+    // 3. Temp formula (Kelvin) = 1500 + speed * 900 + instability * 25
+    const baseTemp = 1400 + (state.speed * 850) + (state.instability * 20);
+    const noiseTemp = (Math.random() - 0.5) * 15;
+    const finalTemp = Math.floor(baseTemp + noiseTemp);
+    DOM.valTemp.innerHTML = `${finalTemp.toLocaleString()} <span class="stat-unit">K</span>`;
+    
+    // 4. Containment Magnetic strength (drops with high instability)
+    const baseContain = Math.max(0, 99.8 - (state.instability * 0.75));
+    const noiseContain = (Math.random() - 0.5) * 0.5;
+    const finalContain = Math.min(100, Math.max(0, baseContain + noiseContain));
+    DOM.barContainment.style.width = `${finalContain}%`;
+    DOM.txtBarContainment.textContent = `${finalContain.toFixed(1)}%`;
+    
+    // 5. Quantum Frequency (fluctuates with speed)
+    const baseFreqBar = Math.min(100, 30 + (state.speed * 25) + (Math.sin(Date.now() * 0.001) * 3));
+    DOM.barFrequency.style.width = `${baseFreqBar}%`;
+    DOM.txtBarFrequency.textContent = `${baseFreqBar.toFixed(1)}%`;
+    
+    // 6. Cooling flow status (critical stress if temp is super high and cooling can't keep up)
+    let finalCooling = 90 - (state.speed * 8) + (Math.random() * 2);
+    if (state.alertActive) finalCooling = Math.max(10, finalCooling - 35);
+    DOM.barCooling.style.width = `${finalCooling}%`;
+    DOM.txtBarCooling.textContent = `${finalCooling.toFixed(1)}%`;
+    
+    // --- Alert state triggers (Instability past 80%) ---
+    if (state.instability >= 80) {
+        if (!state.alertActive) {
+            state.alertActive = true;
+            document.body.classList.add('alert-active');
+            DOM.statusLight.style.backgroundColor = 'var(--clr-danger)';
+            DOM.statusLight.style.boxShadow = '0 0 15px var(--clr-danger)';
+            startAlarm();
+        }
+    } else {
+        if (state.alertActive) {
+            state.alertActive = false;
+            document.body.classList.remove('alert-active');
+            DOM.statusLight.style.backgroundColor = 'var(--clr-success)';
+            DOM.statusLight.style.boxShadow = '0 0 10px var(--clr-success)';
+            stopAlarm();
+        }
+    }
+}
+// Continuous background updater for fluctuating telemetry
+setInterval(() => {
+    if (!state.initialized) return;
+    updateCoreMetrics();
+}, 250);
+// Organic telemetry fluctuation events logged to the terminal console
+setInterval(() => {
+    if (!state.initialized) return;
+    
+    const rand = Math.random();
+    if (rand < 0.25) {
+        const coolingFluct = (Math.random() - 0.5) * 2;
+        logMessage('THERMAL', `Flujo de refrigeración helio líquido estable. Desviación: ${coolingFluct.toFixed(2)}%`);
+    } else if (rand < 0.5) {
+        const fields = ['Antimateria', 'Singularidad', 'Emisión Gamma'];
+        const chosen = fields[Math.floor(Math.random() * fields.length)];
+        logMessage('FIELD', `Campo de contención de ${chosen} calibrado a frecuencia ideal.`);
+    } else if (rand < 0.7 && state.alertActive) {
+        logMessage('DANGER', 'ADVERTENCIA: Integridad de barrera magnética comprometida. ¡Disminuya velocidad!', true);
+    }
+}, 4500);
+// ==========================================================================
+// 5. CONTROL EVENT LISTENERS
+// ==========================================================================
+// Helper to attach event SFX triggers
+function addInteractionSfx(element, clickType = 'click') {
+    element.addEventListener('mouseenter', () => {
+        playSfx('hover');
+    });
+    element.addEventListener('click', () => {
+        playSfx(clickType);
+    });
+}
+// Reactor Speed Slider
+DOM.sldSpeed.addEventListener('input', (e) => {
+    state.speed = parseFloat(e.target.value);
+    DOM.lblSpeed.textContent = `${state.speed.toFixed(1)}x`;
+    updateCoreMetrics();
+    updateAudioHum();
+});
+addInteractionSfx(DOM.sldSpeed, 'hover');
+// Particle Density Slider
+DOM.sldDensity.addEventListener('input', (e) => {
+    state.density = parseInt(e.target.value);
+    // scale bubble text
+    const displayDensity = state.density >= 1000 ? `${state.density / 1000}k` : state.density;
+    DOM.lblDensity.textContent = displayDensity;
+    DOM.valParticles.innerHTML = `${state.density.toLocaleString()} <span class="stat-unit">qP</span>`;
+    
+    // Rebuild points cloud with new density
+    if (state.initialized) {
+        buildQuantumCore();
+        logMessage('CALIBRATION', `Densidad ajustada a ${state.density} partículas.`);
+    }
+});
+addInteractionSfx(DOM.sldDensity, 'hover');
+// Instability Slider
+DOM.sldInstability.addEventListener('input', (e) => {
+    state.instability = parseInt(e.target.value);
+    DOM.lblInstability.textContent = `${state.instability}%`;
+    updateCoreMetrics();
+    updateAudioHum();
+});
+addInteractionSfx(DOM.sldInstability, 'hover');
+// Master Volume Slider
+DOM.sldVolume.addEventListener('input', (e) => {
+    state.volume = parseInt(e.target.value) / 100.0;
+    DOM.lblVolume.textContent = `${e.target.value}%`;
+    
+    if (masterGainNode) {
+        // Safe linear ramp volume change
+        masterGainNode.gain.setTargetAtTime(state.volume * 0.3, audioCtx.currentTime, 0.05);
+    }
+});
+addInteractionSfx(DOM.sldVolume, 'hover');
+// Sound hum enable toggle
+DOM.chkHum.addEventListener('change', (e) => {
+    state.humEnabled = e.target.checked;
+    
+    if (audioCtx) {
+        const targetVol = state.humEnabled ? 0.8 : 0;
+        state.humGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.1);
+        logMessage('AUDIO', `Hum sintetizador ${state.humEnabled ? 'activado' : 'desactivado'}.`);
+    }
+});
+addInteractionSfx(DOM.chkHum, 'click');
+// SFX enable toggle
+DOM.chkSfx.addEventListener('change', (e) => {
+    state.sfxEnabled = e.target.checked;
+    logMessage('AUDIO', `SFX de interacción ${state.sfxEnabled ? 'habilitado' : 'deshabilitado'}.`);
+});
+addInteractionSfx(DOM.chkSfx, 'click');
+// Emit Plasma Pulse trigger button
+DOM.btnPulse.addEventListener('click', () => {
+    if (state.initialized) {
+        triggerQuantumPulse();
+    }
+});
+addInteractionSfx(DOM.btnPulse, 'pulse');
+// Theme Switcher Buttons
+document.querySelectorAll('.theme-selector-grid button').forEach(btn => {
+    addInteractionSfx(btn, 'click');
+    
+    btn.addEventListener('click', (e) => {
+        // Toggle active design
+        document.querySelectorAll('.theme-selector-grid button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Remove existing theme classes from body
+        document.body.classList.remove('theme-plasma', 'theme-darkmatter', 'theme-fusion');
+        
+        // Add selected theme
+        state.theme = btn.dataset.theme;
+        document.body.classList.add(`theme-${state.theme}`);
+        
+        logMessage('THEME', `Espectro cuántico modificado a canal: ${state.theme.toUpperCase()}`);
+        
+        // Update 3D elements matching theme colors
+        if (state.initialized) {
+            updateThreeTheme();
+        }
+    });
+});
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Resonance Core - Consola Holotáctica 3D</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-plasma">
+    <!-- Background Grid Effects -->
+    <div class="bg-radial-glow"></div>
+    <div class="bg-grid"></div>
+    <!-- 3D Canvas (Three.js WebGL) -->
+    <canvas id="canvas3d"></canvas>
+    <!-- INITIALIZATION SPLASH SCREEN (Required for Browser Audio Permission) -->
+    <div id="splashScreen" class="splash-overlay">
+        <div class="splash-bg-particles"></div>
+        <div class="splash-title-area">
+            <div class="splash-pre">Estación Cuántica de Energía</div>
+            <div class="splash-main-title">QUANTUM RESONANCE CORE</div>
+        </div>
+        <button id="initializeBtn" class="splash-btn">Inicializar Núcleo de Fusión</button>
+        <div class="splash-instruction">Haz clic para activar sistemas holográficos y motor de audio</div>
+    </div>
+    <!-- Floating 3D Navigation Instructions -->
+    <div class="3d-instructions" id="instructions">
+        <span>🖱️ Arrastra para Rotar Vista</span>
+        <span>•</span>
+        <span>📜 Scroll para Zoom</span>
+    </div>
+    <!-- MAIN HOLOGRAPHIC DASHBOARD OVERLAY -->
+    <div class="ui-overlay">
+        
+        <!-- HEADER SYSTEM STATUS -->
+        <header class="panel header-panel ui-panel-interactive">
+            <div class="logo-area">
+                <span class="reactor-status-light" id="statusLight"></span>
+                <span class="logo-text">Resonance Console v4.9</span>
+            </div>
+            <div class="system-clock" id="systemClock">00:00:00.000</div>
+        </header>
+        <!-- LEFT COLUMN: SYSTEM TELEMETRY -->
+        <aside class="left-sidebar">
+            
+            <!-- Real-time Metrics -->
+            <section class="panel ui-panel-interactive">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Telemetría Core</h2>
+                        <div class="panel-subtitle">Monitoreo de Energía Activa</div>
+                    </div>
+                </div>
+                <div class="stat-container">
+                    <div class="stat-card">
+                        <span class="stat-label">Rotación Core</span>
+                        <span class="stat-value" id="valRotSpeed">1.20 <span class="stat-unit">rad/s</span></span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Potencia de Salida</span>
+                        <span class="stat-value" id="valPower">482.4 <span class="stat-unit">GW</span></span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Temperatura Núcleo</span>
+                        <span class="stat-value" id="valTemp">2,845 <span class="stat-unit">K</span></span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Carga de Partículas</span>
+                        <span class="stat-value" id="valParticles">25,000 <span class="stat-unit">qP</span></span>
+                    </div>
+                </div>
+            </section>
+            <!-- Diagnostic Bars -->
+            <section class="panel ui-panel-interactive">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Campos Magnéticos</h2>
+                        <div class="panel-subtitle">Diagnósticos de Contención</div>
+                    </div>
+                </div>
+                <div class="diagnostic-bars">
+                    <div class="diag-bar-group">
+                        <div class="diag-label-row">
+                            <span>Barrera Anti-Materia</span>
+                            <span id="txtBarContainment">94.2%</span>
+                        </div>
+                        <div class="diag-bar-bg">
+                            <div class="diag-bar-fill" id="barContainment" style="width: 94.2%"></div>
+                        </div>
+                    </div>
+                    <div class="diag-bar-group">
+                        <div class="diag-label-row">
+                            <span>Frecuencia Cuántica</span>
+                            <span id="txtBarFrequency">72.5%</span>
+                        </div>
+                        <div class="diag-bar-bg">
+                            <div class="diag-bar-fill" id="barFrequency" style="width: 72.5%"></div>
+                        </div>
+                    </div>
+                    <div class="diag-bar-group">
+                        <div class="diag-label-row">
+                            <span>Flujo Refrigerante</span>
+                            <span id="txtBarCooling">88.0%</span>
+                        </div>
+                        <div class="diag-bar-bg">
+                            <div class="diag-bar-fill" id="barCooling" style="width: 88%"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- Waveform visualizer -->
+            <section class="panel ui-panel-interactive" style="flex-grow: 1;">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Frecuencia de Sonido</h2>
+                        <div class="panel-subtitle">Firma de Onda de Reactor</div>
+                    </div>
+                </div>
+                <div class="visualizer-area">
+                    <canvas id="oscilloscope"></canvas>
+                </div>
+            </section>
+        </aside>
+        <!-- CENTER AREA BOTTOM: CONSOLE LOG FEED -->
+        <div class="bottom-overlay-area">
+            <div class="console-log-feed" id="consoleFeed">
+                <div class="console-line">
+                    <span class="timestamp">[SYS_INIT]</span>
+                    <span class="message">Consola Quantum cargada en modo seguro. Esperando núcleo...</span>
+                </div>
+            </div>
+        </div>
+        <!-- RIGHT COLUMN: REACTOR CONTROLS -->
+        <aside class="right-sidebar">
+            
+            <!-- Core Physical Parameters Slider -->
+            <section class="panel ui-panel-interactive">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Calibración Core</h2>
+                        <div class="panel-subtitle">Modulación del Campo</div>
+                    </div>
+                </div>
+                
+                <div class="slider-group">
+                    <div class="slider-label-row">
+                        <span class="slider-name">Velocidad del Reactor</span>
+                        <span class="slider-val-bubble" id="lblSpeed">1.2x</span>
+                    </div>
+                    <input type="range" class="cyber-slider" id="sldSpeed" min="0.1" max="4.0" step="0.05" value="1.2">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label-row">
+                        <span class="slider-name">Densidad de Partículas</span>
+                        <span class="slider-val-bubble" id="lblDensity">25k</span>
+                    </div>
+                    <input type="range" class="cyber-slider" id="sldDensity" min="5000" max="60000" step="5000" value="25000">
+                </div>
+                <div class="slider-group">
+                    <div class="slider-label-row">
+                        <span class="slider-name">Nivel de Inestabilidad</span>
+                        <span class="slider-val-bubble" id="lblInstability">18%</span>
+                    </div>
+                    <input type="range" class="cyber-slider" id="sldInstability" min="0" max="100" step="1" value="18">
+                </div>
+            </section>
+            <!-- Color Spectrum / Themes Selection -->
+            <section class="panel ui-panel-interactive">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Espectro Cuántico</h2>
+                        <div class="panel-subtitle">Longitud de Onda de Plasma</div>
+                    </div>
+                </div>
+                <div class="theme-selector-grid">
+                    <button class="cyber-btn theme-btn-plasma active" data-theme="plasma">Plasma</button>
+                    <button class="cyber-btn theme-btn-darkmatter" data-theme="darkmatter">Materia</button>
+                    <button class="cyber-btn theme-btn-fusion" data-theme="fusion">Fusión</button>
+                </div>
+            </section>
+            <!-- Audio & Sound Controls -->
+            <section class="panel ui-panel-interactive">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">Sistemas de Audio</h2>
+                        <div class="panel-subtitle">Filtros y Sintetizador</div>
+                    </div>
+                </div>
+                <div class="audio-controls">
+                    <div class="toggle-switch-group">
+                        <span class="slider-name">Zumbido de Reactor</span>
+                        <label class="switch">
+                            <input type="checkbox" id="chkHum" checked>
+                            <span class="slider-toggle"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-switch-group">
+                        <span class="slider-name">Sonidos de Interacción</span>
+                        <label class="switch">
+                            <input type="checkbox" id="chkSfx" checked>
+                            <span class="slider-toggle"></span>
+                        </label>
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label-row">
+                            <span class="slider-name">Volumen Maestro</span>
+                            <span class="slider-val-bubble" id="lblVolume">60%</span>
+                        </div>
+                        <input type="range" class="cyber-slider" id="sldVolume" min="0" max="100" step="5" value="60">
+                    </div>
+                </div>
+            </section>
+            <!-- Emergency Pulse Burst Trigger -->
+            <section class="panel ui-panel-interactive" style="border-top: 2px solid var(--clr-primary);">
+                <button class="pulse-trigger-btn" id="btnPulse">Emitir Pulso Cuántico</button>
+            </section>
+        </aside>
+    </div>
+    <!-- Scripts (Using CDN for Three.js and OrbitControls to avoid package build overhead, compatible with file:// protocol opening) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+/* ==========================================================================
+   QUANTUM RESONANCE CORE - PREMIUM STYLING
+   ========================================================================== */
+/* --- Google Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap');
+/* --- Custom Variables & Themes --- */
+:root {
+    /* Fonts */
+    --font-sci-fi: 'Orbitron', sans-serif;
+    --font-ui: 'Inter', sans-serif;
+    /* Theme Colors (Default: Plasma Core) */
+    --clr-bg: #03060f;
+    --clr-panel-bg: rgba(6, 11, 26, 0.65);
+    --clr-panel-border: rgba(0, 243, 255, 0.25);
+    --clr-glow: rgba(0, 243, 255, 0.4);
+    
+    --clr-primary: #00f3ff;
+    --clr-primary-dark: #0088cc;
+    --clr-secondary: #0066ff;
+    --clr-accent: #ff00ea;
+    
+    /* System States */
+    --clr-success: #00ff66;
+    --clr-warning: #ffb700;
+    --clr-danger: #ff0055;
+    --clr-danger-glow: rgba(255, 0, 85, 0.4);
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+/* --- Theme Definitions --- */
+body.theme-plasma {
+    --clr-primary: #00f3ff;
+    --clr-primary-dark: #005f73;
+    --clr-secondary: #005f73;
+    --clr-glow: rgba(0, 243, 255, 0.45);
+    --clr-panel-border: rgba(0, 243, 255, 0.25);
+}
+body.theme-darkmatter {
+    --clr-primary: #bd00ff;
+    --clr-primary-dark: #6a00a8;
+    --clr-secondary: #ff007a;
+    --clr-glow: rgba(189, 0, 255, 0.45);
+    --clr-panel-border: rgba(189, 0, 255, 0.25);
+}
+body.theme-fusion {
+    --clr-primary: #ffaa00;
+    --clr-primary-dark: #9e5b00;
+    --clr-secondary: #ff3c00;
+    --clr-glow: rgba(255, 170, 0, 0.45);
+    --clr-panel-border: rgba(255, 170, 0, 0.25);
+}
+/* --- Critical Alert Overlay Modifiers --- */
+body.alert-active {
+    animation: emergency-flash 2s infinite;
+}
+body.alert-active .panel {
+    border-color: var(--clr-danger);
+    box-shadow: 0 0 15px var(--clr-danger-glow);
+}
+body.alert-active .glow-text {
+    color: var(--clr-danger) !important;
+    text-shadow: 0 0 10px var(--clr-danger);
+}
+/* --- Base Elements --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--clr-bg);
+    color: #e2e8f0;
+    font-family: var(--font-ui);
+    font-size: 14px;
+}
+/* Background grid styling */
+.bg-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center center;
+    pointer-events: none;
+    z-index: 1;
+}
+.bg-radial-glow {
+    position: absolute;
+    width: 150vw;
+    height: 150vh;
+    top: -25vh;
+    left: -25vw;
+    background: radial-gradient(circle, rgba(10, 25, 50, 0.8) 0%, rgba(3, 6, 15, 1) 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+/* Canvas for 3D Viewport */
+#canvas3d {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+/* --- UI Overlays Container --- */
+.ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none; /* Let clicks pass through to 3D canvas */
+    display: grid;
+    grid-template-columns: 320px 1fr 340px;
+    grid-template-rows: 80px 1fr;
+    padding: 20px;
+    gap: 20px;
+}
+/* Allow interaction on UI panels */
+.ui-panel-interactive {
+    pointer-events: auto;
+}
+/* --- Glassmorphism Panels --- */
+.panel {
+    background: var(--clr-panel-bg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid var(--clr-panel-border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(255, 255, 255, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+}
+/* Scanline animation on panels */
+.panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, transparent, var(--clr-primary), transparent);
+    opacity: 0.3;
+    animation: scanline 6s linear infinite;
+    pointer-events: none;
+}
+.panel-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.panel-title {
+    font-family: var(--font-sci-fi);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--clr-primary);
+    text-transform: uppercase;
+    text-shadow: 0 0 8px var(--clr-glow);
+}
+.panel-subtitle {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: -5px;
+}
+/* --- Header Section --- */
+header.header-panel {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 25px;
+    height: 100%;
+}
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.reactor-status-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--clr-success);
+    box-shadow: 0 0 10px var(--clr-success);
+    display: inline-block;
+    transition: var(--transition-smooth);
+}
+.logo-text {
+    font-family: var(--font-sci-fi);
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #ffffff 30%, var(--clr-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+.system-clock {
+    font-family: var(--font-sci-fi);
+    font-size: 1.1rem;
+    color: #94a3b8;
+    letter-spacing: 1px;
+}
+/* --- Left Column: Telemetry & Core Status --- */
+.left-sidebar {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+}
+/* Telemetry stat cards */
+.stat-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+.stat-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition-smooth);
+}
+.stat-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+.stat-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+}
+.stat-value {
+    font-family: var(--font-sci-fi);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--clr-primary);
+    text-shadow: 0 0 5px var(--clr-glow);
+}
+.stat-unit {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-left: 2px;
+}
+/* Diagnostic Progress Bars */
+.diagnostic-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.diag-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.diag-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.diag-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+.diag-bar-fill {
+    height: 100%;
+    width: 0%; /* Dynamic */
+    background: linear-gradient(to right, var(--clr-secondary), var(--clr-primary));
+    border-radius: 4px;
+    box-shadow: 0 0 8px var(--clr-glow);
+    transition: width 0.4s cubic-bezier(0.1, 0.8, 0.1, 1);
+}
+/* Oscilloscope / Waveform Visualizer Panel */
+.visualizer-area {
+    flex-grow: 1;
+    min-height: 150px;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    overflow: hidden;
+}
+#oscilloscope {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+/* --- Right Column: Tuning Controls & Audio Settings --- */
+.right-sidebar {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100%;
+}
+/* Sliders styling */
+.slider-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.slider-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.slider-name {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #cbd5e1;
+}
+.slider-val-bubble {
+    font-family: var(--font-sci-fi);
+    font-size: 0.85rem;
+    color: var(--clr-primary);
+    text-shadow: 0 0 5px var(--clr-glow);
+    font-weight: bold;
+}
+.cyber-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    outline: none;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    transition: var(--transition-smooth);
+}
+.cyber-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--clr-primary);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 10px var(--clr-primary);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+.cyber-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px var(--clr-primary);
+}
+/* Grid layout for Theme Buttons */
+.theme-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.cyber-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 10px;
+    border-radius: 6px;
+    font-family: var(--font-sci-fi);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.cyber-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.cyber-btn.active {
+    background: rgba(0, 243, 255, 0.12);
+    border-color: var(--clr-primary);
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+    text-shadow: 0 0 5px var(--clr-primary);
+}
+/* Specific theme color indicators */
+.cyber-btn.theme-btn-plasma.active {
+    background: rgba(0, 243, 255, 0.15);
+    border-color: #00f3ff;
+}
+.cyber-btn.theme-btn-darkmatter.active {
+    background: rgba(189, 0, 255, 0.15);
+    border-color: #bd00ff;
+    box-shadow: 0 0 10px rgba(189, 0, 255, 0.25);
+    text-shadow: 0 0 5px #bd00ff;
+}
+.cyber-btn.theme-btn-fusion.active {
+    background: rgba(255, 170, 0, 0.15);
+    border-color: #ffaa00;
+    box-shadow: 0 0 10px rgba(255, 170, 0, 0.25);
+    text-shadow: 0 0 5px #ffaa00;
+}
+/* Audio control section */
+.audio-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.toggle-switch-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider-toggle {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.slider-toggle:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #94a3b8;
+    transition: .4s;
+    border-radius: 50%;
+}
+input:checked + .slider-toggle {
+    background-color: rgba(0, 243, 255, 0.2);
+    border-color: var(--clr-primary);
+}
+input:checked + .slider-toggle:before {
+    transform: translateX(20px);
+    background-color: var(--clr-primary);
+    box-shadow: 0 0 8px var(--clr-primary);
+}
+/* Big trigger button */
+.pulse-trigger-btn {
+    background: linear-gradient(135deg, var(--clr-primary-dark), var(--clr-secondary));
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 14px;
+    border-radius: 8px;
+    font-family: var(--font-sci-fi);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+.pulse-trigger-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--clr-glow);
+    border-color: #ffffff;
+}
+.pulse-trigger-btn:active {
+    transform: translateY(1px);
+}
+/* --- Center Area Bottom Overlay: Telemetry log feed --- */
+.bottom-overlay-area {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 10px;
+}
+.console-log-feed {
+    width: 80%;
+    max-width: 600px;
+    height: 80px;
+    background: rgba(3, 6, 15, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #64748b;
+    overflow-y: hidden;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+}
+.console-line {
+    display: flex;
+    gap: 10px;
+    animation: fade-in-up 0.3s ease-out;
+}
+.console-line .timestamp {
+    color: var(--clr-primary);
+}
+.console-line .message {
+    color: #cbd5e1;
+}
+/* --- Initial Splash Overlay (Browser Interaction Prerequisite) --- */
+.splash-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, #070e24 0%, #02040b 100%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    transition: opacity 1.2s cubic-bezier(0.8, 0, 0.2, 1);
+    opacity: 1;
+}
+.splash-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.splash-title-area {
+    text-align: center;
+}
+.splash-pre {
+    font-family: var(--font-sci-fi);
+    font-size: 0.9rem;
+    letter-spacing: 5px;
+    color: var(--clr-primary);
+    text-transform: uppercase;
+    text-shadow: 0 0 10px var(--clr-glow);
+    margin-bottom: 10px;
+    animation: pulse 2s infinite alternate;
+}
+.splash-main-title {
+    font-family: var(--font-sci-fi);
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.4) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(0, 243, 255, 0.2));
+}
+.splash-btn {
+    background: transparent;
+    border: 2px solid var(--clr-primary);
+    color: var(--clr-primary);
+    font-family: var(--font-sci-fi);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 16px 40px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+.splash-btn:hover {
+    background: var(--clr-primary);
+    color: var(--clr-bg);
+    box-shadow: 0 0 35px var(--clr-primary);
+    transform: scale(1.05);
+}
+.splash-btn::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: skewX(-30deg);
+    transition: 0.75s;
+    opacity: 0;
+}
+.splash-btn:hover::after {
+    left: 120%;
+    opacity: 1;
+}
+.splash-instruction {
+    font-size: 0.8rem;
+    color: #475569;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 10px;
+}
+/* Floating quantum particles in splash */
+.splash-bg-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: -1;
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(0, 243, 255, 0.08) 1px, transparent 1px),
+        radial-gradient(circle at 75% 15%, rgba(189, 0, 255, 0.08) 1px, transparent 1px),
+        radial-gradient(circle at 45% 80%, rgba(255, 170, 0, 0.05) 1px, transparent 1px);
+    background-size: 80px 80px;
+}
+/* --- Instructional tooltip helper --- */
+.3d-instructions {
+    position: absolute;
+    left: 50%;
+    top: 100px;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 5;
+    pointer-events: none;
+    animation: fade-in-out 6s forwards;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+/* --- KEYFRAME ANIMATIONS --- */
+@keyframes pulse {
+    0% { opacity: 0.5; filter: drop-shadow(0 0 2px var(--clr-glow)); }
+    100% { opacity: 1; filter: drop-shadow(0 0 12px var(--clr-primary)); }
+}
+@keyframes scanline {
+    0% { top: -5%; }
+    100% { top: 105%; }
+}
+@keyframes emergency-flash {
+    0%, 100% { 
+        background-color: var(--clr-bg); 
+    }
+    50% { 
+        background-color: #120308; 
+    }
+}
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@keyframes fade-in-out {
+    0% { opacity: 0; transform: translate(-50%, -10px); }
+    10% { opacity: 1; transform: translate(-50%, 0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -10px); pointer-events: none; }
+}
+/* --- Responsive Adjustments --- */
+@media (max-width: 1024px) {
+    .ui-overlay {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        overflow-y: auto;
+        pointer-events: auto;
+    }
+    .ui-panel-interactive {
+        pointer-events: auto;
+    }
+    .left-sidebar, .right-sidebar {
+        grid-column: 1;
+    }
+    .bottom-overlay-area {
+        grid-column: 1;
+        grid-row: auto;
+    }
+    .console-log-feed {
+        width: 100%;
+    }
+}
