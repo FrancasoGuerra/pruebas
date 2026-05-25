@@ -23,13 +23,11 @@
             
             --transition-luxury: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
-
         * {
             box-sizing: border-box;
             margin: 0; padding: 0;
             user-select: none;
         }
-
         body, html {
             width: 100%;
             background-color: var(--clr-bg);
@@ -37,7 +35,6 @@
             font-family: var(--font-sans);
             overflow-x: hidden;
         }
-
         /* 3D Canvas fixed behind scrolling text content */
         #canvas3d {
             position: fixed;
@@ -46,7 +43,6 @@
             z-index: 1;
             pointer-events: auto;
         }
-
         /* Ambient studio lighting shadow overlay */
         .vignette-overlay {
             position: fixed;
@@ -55,7 +51,6 @@
             pointer-events: none;
             z-index: 2;
         }
-
         /* --- SCROLLING CONTENT SECTIONS --- */
         .scroll-wrapper {
             position: relative;
@@ -63,7 +58,6 @@
             z-index: 10;
             pointer-events: none; /* Let clicks pass to 3D canvas when needed */
         }
-
         section {
             width: 100%;
             min-height: 100vh;
@@ -73,7 +67,6 @@
             position: relative;
             pointer-events: none;
         }
-
         .content-box {
             max-width: 550px;
             pointer-events: auto; /* Re-enable clicks for text panels and buttons */
@@ -84,7 +77,6 @@
             transform: translateY(0);
             transition: var(--transition-luxury);
         }
-
         /* --- HEADER NAVIGATION --- */
         .navbar {
             position: fixed;
@@ -101,7 +93,6 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         }
-
         .brand {
             font-family: var(--font-serif);
             font-size: 1.8rem;
@@ -111,13 +102,11 @@
             text-decoration: none;
             font-weight: 700;
         }
-
         .nav-menu {
             display: flex;
             gap: 45px;
             list-style: none;
         }
-
         .nav-menu a {
             color: var(--clr-text-muted);
             text-decoration: none;
@@ -127,11 +116,9 @@
             font-weight: 600;
             transition: color 0.3s ease;
         }
-
         .nav-menu a:hover, .nav-menu a.active {
             color: var(--clr-gold);
         }
-
         /* --- SECTION 1: HERO ATELIER --- */
         .tagline {
             font-size: 0.8rem;
@@ -140,7 +127,6 @@
             color: var(--clr-gold);
             font-weight: 600;
         }
-
         .title-large {
             font-family: var(--font-serif);
             font-size: 5rem;
@@ -148,21 +134,18 @@
             font-weight: 400;
             color: #ffffff;
         }
-
         .title-large em {
             font-family: var(--font-serif);
             font-style: italic;
             font-weight: 400;
             color: var(--clr-text-muted);
         }
-
         .paragraph {
             font-size: 0.95rem;
             line-height: 1.8;
             color: var(--clr-text-muted);
             font-weight: 300;
         }
-
         .luxury-btn {
             background: transparent;
             border: 1px solid var(--clr-gold);
@@ -177,13 +160,11 @@
             align-self: flex-start;
             transition: var(--transition-luxury);
         }
-
         .luxury-btn:hover {
             background: #ffffff;
             color: var(--clr-bg);
             border-color: #ffffff;
         }
-
         /* --- SECTION 2: THE EXPLODED CALIBER --- */
         .caliber-specs {
             display: grid;
@@ -193,26 +174,22 @@
             border-top: 1px solid rgba(255, 255, 255, 0.08);
             padding-top: 25px;
         }
-
         .spec-item {
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
-
         .spec-num {
             font-family: var(--font-serif);
             font-size: 2.2rem;
             color: var(--clr-gold);
         }
-
         .spec-lbl {
             font-size: 0.72rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: var(--clr-text-muted);
         }
-
         /* --- SECTION 3: ATELIER CONFIGURATOR --- */
         .selector-box {
             display: flex;
@@ -220,12 +197,10 @@
             gap: 20px;
             margin-top: 10px;
         }
-
         .metal-btn-group {
             display: flex;
             gap: 15px;
         }
-
         .metal-btn {
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -239,17 +214,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
         .metal-btn:hover {
             border-color: rgba(255, 255, 255, 0.3);
         }
-
         .metal-btn.active {
             border-color: var(--clr-gold);
             background: rgba(223, 186, 115, 0.08);
             color: var(--clr-gold);
         }
-
         /* --- FOOTER ATELIER INFO --- */
         .atelier-footer {
             width: 100%;
@@ -267,7 +239,6 @@
             z-index: 10;
             background: #09090a;
         }
-
         /* --- Responsive Viewports --- */
         @media (max-width: 1024px) {
             .navbar { padding: 0 40px; }
@@ -277,13 +248,10 @@
     </style>
 </head>
 <body>
-
     <!-- Background Cinematic Lighting -->
     <div class="vignette-overlay"></div>
-
     <!-- 3D Mechanical Caliber Viewport -->
     <canvas id="canvas3d"></canvas>
-
     <!-- MAIN EDITORIAL CONTENT LAYER -->
     <div class="scroll-wrapper">
         
@@ -296,7 +264,6 @@
                 <li><a href="#noble">Metales</a></li>
             </ul>
         </nav>
-
         <!-- SECTION 1: HERO LANDING -->
         <section id="atelier">
             <div class="content-box">
@@ -308,7 +275,6 @@
                 <button class="luxury-btn">Descubrir Calibre</button>
             </div>
         </section>
-
         <!-- SECTION 2: EXPLODED VIEW SPECIFICATIONS (SCROLL INTERACTIVE TRIGGER) -->
         <section id="caliber">
             <div class="content-box" style="margin-left: auto;">
@@ -333,7 +299,6 @@
                 </div>
             </div>
         </section>
-
         <!-- SECTION 3: METALLURGICAL CONFIGURATOR -->
         <section id="noble">
             <div class="content-box">
@@ -352,19 +317,15 @@
                 </div>
             </div>
         </section>
-
         <!-- Elegant Heritage Footer -->
         <footer class="atelier-footer">
             <span>© 2026 Kronos Haute Horlogerie SA. Todos los derechos reservados.</span>
             <span>Ginebra, Suiza</span>
         </footer>
-
     </div>
-
     <!-- WebGL Rendering Libraries (Three.js estables) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
     <script>
         // --- Technical Configurations ---
         const state = {
@@ -373,7 +334,6 @@
             scrollY: 0,
             targetScrollY: 0
         };
-
         const metalColors = {
             gold: {
                 main: '#dfba73',
@@ -391,13 +351,11 @@
                 metalness: 0.85
             }
         };
-
         // --- Three.js variables ---
         let scene, camera, renderer, controls;
         let mainGear, escapementWheel, balanceWheel, balanceSpring; // Caliber components
         let bridgePlateTop, bridgePlateBottom;
         let caliberGroup;
-
         // Custom gear generator (Procedural teeth geometry!)
         function createProceduralGearGeometry(outerRadius, innerRadius, thickness, teethCount) {
             const geom = new THREE.Group();
@@ -407,7 +365,6 @@
             const rimMesh = new THREE.Mesh(rimGeom, new THREE.MeshStandardMaterial());
             rimMesh.rotation.x = Math.PI / 2;
             geom.add(rimMesh);
-
             // Connective spokes (radios)
             const spokeGeom = new THREE.BoxGeometry(outerRadius * 2, thickness * 0.8, outerRadius * 0.15);
             for (let i = 0; i < 3; i++) {
@@ -415,7 +372,6 @@
                 spoke.rotation.y = (i * Math.PI) / 3;
                 geom.add(spoke);
             }
-
             // Individual gear teeth extruded procedurally
             const teethWidth = (outerRadius * Math.PI) / teethCount * 0.8;
             const toothGeom = new THREE.BoxGeometry(teethWidth, thickness, outerRadius * 0.15);
@@ -429,57 +385,44 @@
                 tooth.rotation.y = -angle;
                 geom.add(tooth);
             }
-
             return geom;
         }
-
         // Initialize 3D Haute Horlogerie Caliber
         function initThree() {
             const container = document.getElementById('canvas3d');
             
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2('#09090a', 0.04);
-
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
             // Elegant diagonal camera perspective
             camera.position.set(-2, 1.8, 6.2);
-
             renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
             // Luxury Studio Lighting (Soft shadows, highly metallic reflections)
             const mainLight = new THREE.DirectionalLight('#ffffff', 2.5);
             mainLight.position.set(4, 8, 4);
             scene.add(mainLight);
-
             const champaingBacklight = new THREE.DirectionalLight('#ffd59e', 1.2); // champaing light highlights
             champaingBacklight.position.set(-4, -2, -3);
             scene.add(champaingBacklight);
-
             const floorGlow = new THREE.AmbientLight('#121217', 1.0);
             scene.add(floorGlow);
-
             // Caliber main parent group
             caliberGroup = new THREE.Group();
             scene.add(caliberGroup);
-
             buildMechanicalCaliberComponents();
-
             // Set default champaing gold metal finish
             updateCaliberMetalProperties();
-
             renderer.setAnimationLoop(renderLoop);
             window.addEventListener('resize', onWindowResize);
             state.initialized = true;
         }
-
         function buildMechanicalCaliberComponents() {
             // Delete if rebuilding
             while(caliberGroup.children.length > 0){ 
                 caliberGroup.remove(caliberGroup.children[0]); 
             }
-
             // 1. Core structural bridge plates (top and bottom)
             const bridgeGeom = new THREE.CylinderGeometry(2.6, 2.6, 0.12, 6, 1, true); // hexagon hollow shape
             const bridgeMat = new THREE.MeshStandardMaterial({ color: '#161619', roughness: 0.45, metalness: 0.1 });
@@ -487,21 +430,17 @@
             bridgePlateTop = new THREE.Mesh(bridgeGeom, bridgeMat);
             bridgePlateTop.position.y = 0.8;
             caliberGroup.add(bridgePlateTop);
-
             bridgePlateBottom = new THREE.Mesh(bridgeGeom, bridgeMat);
             bridgePlateBottom.position.y = -0.8;
             caliberGroup.add(bridgePlateBottom);
-
             // 2. Large transmission gear (Main spring barrel representation)
             mainGear = createProceduralGearGeometry(1.5, 0.4, 0.15, 36);
             mainGear.position.set(0.6, 0.2, 0.2);
             caliberGroup.add(mainGear);
-
             // 3. Medium escapement wheel
             escapementWheel = createProceduralGearGeometry(0.85, 0.2, 0.1, 24);
             escapementWheel.position.set(-0.8, -0.15, -0.2);
             caliberGroup.add(escapementWheel);
-
             // 4. Large balance wheel (Oscillating regulating heart)
             balanceWheel = new THREE.Group();
             
@@ -509,12 +448,10 @@
             const rim = new THREE.Mesh(rimGeom, new THREE.MeshStandardMaterial());
             rim.rotation.x = Math.PI/2;
             balanceWheel.add(rim);
-
             // balance spoke bar
             const spokeGeom = new THREE.BoxGeometry(2.3, 0.06, 0.15);
             const spoke = new THREE.Mesh(spokeGeom, new THREE.MeshStandardMaterial());
             balanceWheel.add(spoke);
-
             balanceWheel.position.set(-0.4, 0.5, 0.5);
             caliberGroup.add(balanceWheel);
             
@@ -538,7 +475,6 @@
             balanceSpring.position.set(-0.4, 0.65, 0.5);
             caliberGroup.add(balanceSpring);
         }
-
         // Apply selected metal noble finish properties to gears
         function updateCaliberMetalProperties() {
             const metal = metalColors[state.metal];
@@ -555,11 +491,9 @@
                 }
             });
         }
-
         // --- ANIMATION FRAME ENGINE ---
         function renderLoop(time) {
             const elapsed = time * 0.001;
-
             // 1. Oscillating Balance Wheel movement (Ticking Harmonic Sine Motion at 4Hz!)
             // Ticks back and forth representing mechanical anchor regulation
             const tickFrequency = Math.PI * 4; // 4Hz tick
@@ -574,7 +508,6 @@
                 const pulse = 1.0 + Math.sin(elapsed * tickFrequency) * 0.04;
                 balanceSpring.scale.set(pulse, 1.0, pulse);
             }
-
             // 2. Continuous rotating gears meshing together smoothly
             if (mainGear) {
                 mainGear.rotation.y = elapsed * 0.03; // slow rotation representation
@@ -583,7 +516,6 @@
                 // Escapement spins faster in opposite direction
                 escapementWheel.rotation.y = -elapsed * 0.12;
             }
-
             // ==========================================================================
             // SCROLL-DRIVEN CINEMATIC 3D EXPLODED DISASSEMBLY SYSTEM
             // ==========================================================================
@@ -592,7 +524,6 @@
             
             const maxScrollHeight = window.innerHeight * 2; // scroll depth coefficient
             const scrollRatio = Math.min(1.0, state.scrollY / maxScrollHeight);
-
             // Separate caliber components along Y-axis based on scroll ratio (Exploded view!)
             if (state.initialized) {
                 // Top Bridge plate elevates
@@ -607,10 +538,8 @@
                 
                 balanceWheel.position.y = 0.5 + (scrollRatio * 0.8);
                 balanceSpring.position.y = 0.65 + (scrollRatio * 1.15);
-
                 // Bottom Bridge plate descends
                 bridgePlateBottom.position.y = -0.8 - (scrollRatio * 1.5);
-
                 // Cinematic Camera smooth pan based on scroll ratio
                 // Camera tilts up and moves closer to inspect the exploded layers!
                 camera.position.x = -2 - (scrollRatio * 2.5);
@@ -618,21 +547,17 @@
                 camera.position.z = 6.2 - (scrollRatio * 1.8);
                 camera.lookAt(new THREE.Vector3(0, 0, 0));
             }
-
             renderer.render(scene, camera);
         }
-
         // Scroll listener updating target scroll position
         window.addEventListener('scroll', () => {
             state.targetScrollY = window.scrollY;
-
             // Highlight nav links dynamically based on scroll sections
             const scrollPos = window.scrollY;
             const h = window.innerHeight;
             
             const links = document.querySelectorAll('.nav-menu a');
             links.forEach(l => l.classList.remove('active'));
-
             if (scrollPos < h * 0.7) {
                 links[0].classList.add('active'); // Atelier
             } else if (scrollPos >= h * 0.7 && scrollPos < h * 1.5) {
@@ -641,24 +566,20 @@
                 links[2].classList.add('active'); // Noble Metals
             }
         });
-
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
-
         // Initialize 3D Engine on immediate page load
         window.addEventListener('DOMContentLoaded', () => {
             initThree();
         });
-
         // Configurator Metals Button Triggers
         document.querySelectorAll('.metal-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.metal-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-
                 state.metal = btn.dataset.metal;
                 updateCaliberMetalProperties();
             });
