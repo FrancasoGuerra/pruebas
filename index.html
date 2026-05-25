@@ -3,22 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GastroVisor VR - Endoscopia Médica Interactiva 3D</title>
-    <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap">
+    <title>Nova Horizon - Viajes Espaciales de Lujo</title>
+    <!-- Google Fonts Premium -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=Syne:wght@700;800&family=Share+Tech+Mono&display=swap">
     
     <style>
         /* ==========================================================================
-           VISOR QUIRÚRGICO DE REALIDAD AUMENTADA (HOLO-HUD)
+           ESTILOS GENERALES Y DISEÑO DE ULTRA-LUJO ESPACIAL
            ========================================================================== */
         :root {
-            --font-hud: 'Share Tech Mono', monospace;
-            --font-sci-fi: 'Orbitron', sans-serif;
-            --clr-hud-cyan: #00f3ff;
-            --clr-hud-green: #00ff66;
-            --clr-hud-red: #ff0055;
-            --clr-hud-bg: rgba(0, 8, 20, 0.45);
-            --transition-hud: all 0.4s cubic-bezier(0.15, 0.85, 0.15, 1);
+            --font-display: 'Syne', sans-serif;
+            --font-body: 'Outfit', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+            
+            --clr-bg: #020208;
+            --clr-primary: #00f0ff;
+            --clr-primary-glow: rgba(0, 240, 255, 0.4);
+            --clr-accent: #ff6c00;
+            --clr-accent-glow: rgba(255, 108, 0, 0.4);
+            --clr-violet: #7000ff;
+            
+            --transition-smooth: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            --transition-quick: all 0.2s ease;
         }
 
         * {
@@ -29,939 +35,770 @@
 
         body, html {
             width: 100%; height: 100%;
-            overflow: hidden;
-            background-color: #010408;
-            color: #d1f4ff;
-            font-family: var(--font-hud);
+            background-color: var(--clr-bg);
+            color: #ffffff;
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
-        /* Medical Grid Overlay */
-        .hud-grid {
-            position: absolute;
+        /* Ambient glows and star grid */
+        .space-bg {
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
-                radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.95) 90%),
-                linear-gradient(rgba(0, 243, 255, 0.015) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 243, 255, 0.015) 1px, transparent 1px);
-            background-size: 100% 100%, 60px 60px, 60px 60px;
+                radial-gradient(circle at 10% 20%, rgba(112, 0, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 240, 255, 0.05) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.005) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.005) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 80px 80px, 80px 80px;
             pointer-events: none;
             z-index: 1;
         }
 
         #canvas3d {
-            position: absolute;
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             z-index: 2;
-        }
-
-        .hud-visor-frame {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
-            pointer-events: none;
-            border: 2px solid rgba(0, 243, 255, 0.05);
-            box-shadow: inset 0 0 100px rgba(0, 243, 255, 0.1);
-        }
-
-        .hud-panel {
-            position: absolute;
-            background: var(--clr-hud-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            border-radius: 4px;
-            padding: 15px;
             pointer-events: auto;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 243, 255, 0.05);
-            transition: var(--transition-hud);
         }
 
-        .hud-left {
-            left: 30px; top: 120px;
-            width: 280px;
-            border-left: 3px solid var(--clr-hud-cyan);
-            border-radius: 0 8px 8px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        /* --- THEMES STYLE CLASSES --- */
+        body.theme-nebula {
+            --clr-primary: #00f0ff;
+            --clr-violet: #7000ff;
+        }
+        body.theme-supernova {
+            --clr-primary: #ff6c00;
+            --clr-violet: #ff0055;
+            --clr-primary-glow: rgba(255, 108, 0, 0.4);
+        }
+        body.theme-void {
+            --clr-primary: #a8a8a8;
+            --clr-violet: #151525;
+            --clr-primary-glow: rgba(168, 168, 168, 0.2);
         }
 
-        .hud-header {
-            font-family: var(--font-sci-fi);
-            font-size: 0.9rem;
-            color: var(--clr-hud-cyan);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
-            padding-bottom: 6px;
+        /* --- FULL PAGE LAYOUT --- */
+        .content-container {
+            position: relative;
+            width: 100%;
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass to 3D canvas */
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            height: 90px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0 60px;
+            z-index: 100;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            background: linear-gradient(180deg, rgba(2, 2, 8, 0.8) 0%, transparent 100%);
         }
 
-        .hud-header::before {
-            content: '●';
-            color: var(--clr-hud-cyan);
-            animation: pulse-dot 1.5s infinite alternate;
+        .brand {
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .telemetry-row {
+        .brand .logo-orb {
+            width: 12px; height: 12px;
+            background: var(--clr-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--clr-primary);
+            animation: pulse-logo 2s infinite alternate;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: #8a8ab0;
+            text-decoration: none;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            transition: var(--transition-quick);
+            position: relative;
+            padding-bottom: 6px;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #ffffff;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0; height: 1px;
+            bottom: 0; left: 50%;
+            background: var(--clr-primary);
+            transition: var(--transition-smooth);
+            transform: translateX(-50%);
+        }
+
+        .nav-links a:hover::after, .nav-links a.active::after {
+            width: 100%;
+        }
+
+        /* --- HERO SECTION --- */
+        .hero-section {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 0 100px;
+            position: relative;
+        }
+
+        .hero-info {
+            max-width: 580px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .tagline {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            letter-spacing: 6px;
+            color: var(--clr-primary);
+            text-transform: uppercase;
+            text-shadow: 0 0 10px var(--clr-primary-glow);
+        }
+
+        .main-title {
+            font-family: var(--font-display);
+            font-size: 4.8rem;
+            font-weight: 900;
+            line-height: 1.05;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        .main-title span {
+            color: transparent;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .hero-desc {
+            font-size: 1.05rem;
+            color: #8c8cab;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        /* Futuristic Action Button */
+        .cta-btn {
+            background: linear-gradient(135deg, var(--clr-primary), var(--clr-violet));
+            color: #020208;
+            border: none;
+            padding: 18px 38px;
+            font-family: var(--font-sci-fi);
+            font-weight: 900;
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 4px;
+            align-self: flex-start;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 240, 255, 0.15);
+            transition: var(--transition-smooth);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px var(--clr-primary-glow);
+            color: #ffffff;
+        }
+
+        /* --- FLOATING PLANETARY CONSOLE PANEL --- */
+        .planetary-console {
+            position: absolute;
+            right: 80px; top: 180px;
+            width: 290px;
+            background: rgba(4, 4, 15, 0.55);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 240, 255, 0.18);
+            border-radius: 8px;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            pointer-events: auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.02);
+            transition: var(--transition-smooth);
+        }
+
+        .console-header {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--clr-primary);
+            letter-spacing: 2px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .console-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.82rem;
-            color: #8ab7cc;
+            color: #7b7b9e;
         }
 
-        .telemetry-val {
+        .console-val {
             color: #ffffff;
+            font-family: var(--font-mono);
             font-weight: bold;
-            font-size: 0.9rem;
         }
 
-        .hud-bar-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        
-        .hud-bar-bg {
-            width: 100%; height: 4px;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .hud-bar-fill {
-            height: 100%; width: 50%;
-            background: var(--clr-hud-cyan);
-            box-shadow: 0 0 8px var(--clr-hud-cyan);
-            transition: width 0.5s ease;
-        }
-
-        .hud-right {
-            right: 30px; top: 120px;
-            width: 290px;
-            border-right: 3px solid var(--clr-hud-cyan);
-            border-radius: 8px 0 0 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .mode-btn {
-            background: rgba(0, 243, 255, 0.05);
-            border: 1px solid rgba(0, 243, 255, 0.3);
-            color: var(--clr-hud-cyan);
-            font-family: var(--font-sci-fi);
-            font-size: 0.78rem;
-            font-weight: bold;
-            padding: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: var(--transition-hud);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        /* Modulator Custom Buttons inside console */
+        .spectrum-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
         }
 
-        .mode-btn:hover {
-            background: var(--clr-hud-cyan);
-            color: #010408;
-            box-shadow: 0 0 15px var(--clr-hud-cyan);
-        }
-
-        .mode-btn.active {
-            background: rgba(0, 255, 102, 0.15);
-            border-color: var(--clr-hud-green);
-            color: var(--clr-hud-green);
-            box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
-        }
-
-        .hud-slider-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .hud-slider-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: #8ab7cc;
-        }
-
-        .hud-slider {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 100%; height: 4px;
-            background: rgba(255, 255, 255, 0.08);
-            outline: none;
-        }
-
-        .hud-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 12px; height: 12px;
-            background: var(--clr-hud-cyan);
-            border: 1px solid #ffffff;
-            cursor: pointer;
-            box-shadow: 0 0 8px var(--clr-hud-cyan);
-        }
-
-        .hud-center-reticle {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 140px; height: 140px;
-            border: 1px dashed rgba(0, 243, 255, 0.12);
-            border-radius: 50%;
-            pointer-events: none;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 5;
-        }
-
-        .hud-center-reticle::before {
-            content: '';
-            width: 80px; height: 80px;
-            border: 1px solid rgba(0, 243, 255, 0.25);
-            border-left-color: transparent;
-            border-right-color: transparent;
-            border-radius: 50%;
-            animation: spin 12s linear infinite;
-        }
-
-        .hud-center-reticle::after {
-            content: '';
-            position: absolute;
-            width: 6px; height: 6px;
-            background: var(--clr-hud-cyan);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--clr-hud-cyan);
-            animation: pulse-dot 1s infinite alternate;
-        }
-
-        .bio-label-3d {
-            position: absolute;
-            background: rgba(0, 8, 20, 0.85);
-            border: 1px solid var(--clr-hud-cyan);
-            border-radius: 3px;
-            padding: 5px 10px;
-            color: #ffffff;
+        .spectrum-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #7b7b9e;
+            padding: 8px 4px;
+            font-family: var(--font-mono);
             font-size: 0.72rem;
-            pointer-events: auto;
-            transform: translate(-50%, -100%);
-            z-index: 15;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            white-space: nowrap;
+            text-transform: uppercase;
             cursor: pointer;
-            transition: var(--transition-hud);
+            border-radius: 4px;
+            transition: var(--transition-quick);
+            text-align: center;
         }
 
-        .bio-label-3d:hover, .bio-label-3d.active {
-            background: var(--clr-hud-cyan);
-            color: #010408;
-            box-shadow: 0 0 15px var(--clr-hud-cyan);
+        .spectrum-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
         }
 
-        .bio-label-3d .line-connector {
-            position: absolute;
-            width: 1px; height: 25px;
-            background: var(--clr-hud-cyan);
-            left: 50%; bottom: -25px;
+        .spectrum-btn.active {
+            border-color: var(--clr-primary);
+            background: rgba(0, 240, 255, 0.08);
+            color: #ffffff;
+            box-shadow: 0 0 10px var(--clr-primary-glow);
         }
 
-        .hud-top-bar {
-            grid-column: 1 / -1;
-            height: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            border-bottom: 1px solid rgba(0, 243, 255, 0.1);
-            background: linear-gradient(180deg, rgba(0, 8, 20, 0.8) 0%, transparent 100%);
-        }
-
-        .hud-top-title {
-            font-family: var(--font-sci-fi);
-            font-size: 1.1rem;
-            letter-spacing: 3px;
-            color: var(--clr-hud-cyan);
-            text-shadow: 0 0 10px var(--clr-hud-cyan);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .hud-bottom {
-            grid-column: 2;
-            grid-row: 2;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            padding-bottom: 20px;
-        }
-
-        .medical-console {
-            width: 500px;
-            height: 60px;
-            background: rgba(0, 8, 20, 0.8);
-            border: 1px solid rgba(0, 243, 255, 0.15);
-            padding: 10px 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            font-size: 0.74rem;
-            color: #5c8ca6;
+        /* Mini sound waveform visualizer inside console */
+        .console-visualizer {
+            width: 100%; height: 50px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 4px;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
         }
 
-        .console-line {
-            display: flex;
-            gap: 10px;
-            animation: fade-in-up 0.3s ease-out;
-        }
-        .console-line .tag { color: var(--clr-hud-cyan); }
-        .console-line .txt { color: #d1f4ff; }
-
-        .splash-overlay {
-            position: absolute;
+        /* --- INTRO CINEMATIC SCREEN (CRITICAL AUTOPLAY SECURITY) --- */
+        .intro-splash {
+            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #020e1a 0%, #000205 100%);
-            z-index: 100;
+            background: radial-gradient(circle at center, #06061c 0%, #010104 100%);
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 30px;
-            transition: opacity 1s ease;
+            gap: 40px;
+            transition: opacity 1.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        .splash-overlay.hidden {
+        .intro-splash.hidden {
             opacity: 0;
             pointer-events: none;
         }
 
-        .splash-title-area {
+        .splash-title {
             text-align: center;
         }
 
         .splash-pre {
-            font-family: var(--font-sci-fi);
-            font-size: 0.85rem;
-            letter-spacing: 8px;
-            color: var(--clr-hud-cyan);
-            margin-bottom: 12px;
-            text-shadow: 0 0 10px var(--clr-hud-cyan);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            letter-spacing: 12px;
+            color: var(--clr-primary);
+            margin-bottom: 15px;
+            animation: pulse-logo 2.5s infinite alternate;
         }
 
-        .splash-main-title {
-            font-family: var(--font-sci-fi);
-            font-size: 2.8rem;
+        .splash-main {
+            font-family: var(--font-display);
+            font-size: 3.5rem;
             font-weight: 900;
-            letter-spacing: 4px;
-            background: linear-gradient(180deg, #ffffff 40%, rgba(0, 243, 255, 0.3) 100%);
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #ffffff 40%, rgba(0, 240, 255, 0.25) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .splash-btn {
             background: transparent;
-            border: 2px solid var(--clr-hud-cyan);
-            color: var(--clr-hud-cyan);
+            border: 2px solid var(--clr-primary);
+            color: var(--clr-primary);
             font-family: var(--font-sci-fi);
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 3px;
-            padding: 16px 40px;
+            font-weight: bold;
+            font-size: 1.05rem;
+            letter-spacing: 4px;
+            padding: 16px 45px;
             border-radius: 4px;
             cursor: pointer;
-            transition: var(--transition-hud);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            transition: var(--transition-smooth);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.12);
         }
 
         .splash-btn:hover {
-            background: var(--clr-hud-cyan);
-            color: #010408;
-            box-shadow: 0 0 35px var(--clr-hud-cyan);
-            transform: scale(1.03);
+            background: var(--clr-primary);
+            color: #020208;
+            box-shadow: 0 0 45px var(--clr-primary);
+            transform: scale(1.04);
         }
 
-        #oscilloscope {
-            width: 100%; height: 100%;
+        .splash-instruction {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: #555577;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* --- KEYFRAME ANIMATIONS --- */
+        @keyframes pulse-logo {
+            0% { opacity: 0.4; box-shadow: 0 0 5px var(--clr-primary); }
+            100% { opacity: 1; box-shadow: 0 0 18px var(--clr-primary); }
         }
 
         @keyframes spin {
             100% { transform: rotate(360deg); }
         }
 
-        @keyframes pulse-dot {
-            0% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-
         @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(6px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .endo-indicator {
-            position: absolute;
-            top: 30px; left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 0, 85, 0.2);
-            border: 1px solid var(--clr-hud-red);
-            padding: 6px 16px;
-            border-radius: 4px;
-            font-family: var(--font-sci-fi);
-            font-size: 0.8rem;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 12;
-            animation: pulse-dot 1s infinite alternate;
-            pointer-events: none;
-            opacity: 0;
-            transition: var(--transition-hud);
-        }
-
-        .endo-indicator.active {
-            opacity: 1;
-        }
-
-        .endo-dot {
-            width: 8px; height: 8px;
-            background-color: var(--clr-hud-red);
-            border-radius: 50%;
-            box-shadow: 0 0 8px var(--clr-hud-red);
+        /* --- Responsive Viewports --- */
+        @media (max-width: 1024px) {
+            .navbar { padding: 0 30px; }
+            .hero-section { padding: 0 40px; justify-content: center; }
+            .hero-info { max-width: 100%; text-align: center; align-items: center; }
+            .cta-btn { align-self: center; }
+            .planetary-console {
+                position: relative;
+                right: auto; top: auto;
+                margin: 40px auto;
+                width: 90%;
+            }
         }
     </style>
 </head>
-<body>
+<body class="theme-nebula">
 
-    <!-- Goggles Visor Grid HUD Effects -->
-    <div class="hud-grid"></div>
-    <div class="bg-radial-glow"></div>
+    <!-- Glowing spaces background overlay -->
+    <div class="space-bg"></div>
 
-    <!-- 3D Anatomical Scene Viewport -->
+    <!-- WebGL Rendering Canvas (Three.js) -->
     <canvas id="canvas3d"></canvas>
 
-    <!-- Biometric Labels Floating in 3D Visor -->
-    <div id="bioLabelsContainer" style="position:absolute; width:100%; height:100%; top:0; left:0; pointer-events:none; z-index: 12;"></div>
-
-    <!-- ENDOSCOPY ACTIVE WARNING INDICATOR -->
-    <div class="endo-indicator" id="endoIndicator">
-        <span class="endo-dot"></span>
-        <span>MODO ENDOSCOPIA EN CURSO - CÁMARA INTERNA ACTIVA</span>
-    </div>
-
-    <!-- INTRO SPLASH VISOR INITIALIZATION -->
-    <div id="splashScreen" class="splash-overlay">
-        <div class="splash-title-area">
-            <div class="splash-pre">GASTRO-AR SYSTEMS</div>
-            <div class="splash-main-title">VISOR QUIRÚRGICO INMERSIVO</div>
+    <!-- INTRO CINEMATIC SCREEN FOR AUDIO BYPASS -->
+    <div id="introScreen" class="intro-splash">
+        <div class="splash-title">
+            <div class="splash-pre">Nova Horizon Space Agency</div>
+            <div class="splash-main">AETHER VOYAGES</div>
         </div>
-        <button id="initializeBtn" class="splash-btn">Iniciar Visor AR Quirúrgico</button>
+        <button id="enterBtn" class="splash-btn">Ingresar a Nova Horizon</button>
+        <div class="splash-instruction">Activa audio procedural y holografía 3D</div>
     </div>
 
-    <!-- GLOBAL GOGGLES HUD OVERLAYS -->
-    <div class="ui-overlay">
+    <!-- MAIN IMMERSIVE CONTENT WRAPPER -->
+    <div class="content-container">
         
-        <header class="hud-top-bar ui-panel-interactive">
-            <div class="hud-top-title">
-                <span class="pulse-light"></span>
-                <span>GASTROSCAN VISOR v7.2</span>
+        <!-- Header Navigation Menu -->
+        <nav class="navbar">
+            <div class="brand">
+                <span class="logo-orb"></span>
+                <span>Nova Horizon</span>
             </div>
-            <div style="font-size: 0.95rem; color: var(--clr-hud-cyan);" id="systemClock">00:00:00.000</div>
-        </header>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Charter</a></li>
+                <li><a href="#">Exoplanetas</a></li>
+                <li><a href="#">Servicios</a></li>
+                <li><a href="#">Reservas</a></li>
+            </ul>
+        </nav>
 
-        <!-- LEFT SIDEBAR: CLINICAL METRICS -->
-        <div class="hud-panel hud-left ui-panel-interactive">
-            <div class="hud-header">Métricas de Órgano</div>
+        <!-- Main Hero Landing Content -->
+        <main class="hero-section">
+            <div class="hero-info">
+                <div class="tagline">Turismo de Lujo Interestelar</div>
+                <h1 class="main-title">CONQUISTA EL <span>VACÍO</span></h1>
+                <p class="hero-desc">
+                    Emprende un viaje sin precedentes a Proxima-Centauri d. Admira sus océanos bioluminiscentes de plasma y sus majestuosos anillos de polvo estelar desde la comodidad de una cápsula de gravedad modulada de ultra-lujo.
+                </p>
+                <button class="cta-btn" id="btnCta">Explorar Vuelos</button>
+            </div>
+        </main>
+
+        <!-- FLOATING PLANETARY CONSOLE MODULATOR -->
+        <section class="planetary-console">
+            <div class="console-header">Especímetro Planetario</div>
             
-            <div class="telemetry-row">
-                <span>Órgano Activo:</span>
-                <span class="telemetry-val" id="valOrganName" style="color: var(--clr-hud-cyan);">Esófago</span>
+            <div class="console-row">
+                <span>Destino:</span>
+                <span class="console-val" style="color: var(--clr-primary);">Centauri d</span>
             </div>
 
-            <div class="telemetry-row">
-                <span>pH Tisular:</span>
-                <span class="telemetry-val" id="valOrganPh">7.0</span>
+            <div class="console-row">
+                <span>Distancia Solar:</span>
+                <span class="console-val">4.24 AL</span>
             </div>
 
-            <div class="telemetry-row">
-                <span>Enzimas de Degradación:</span>
-                <span class="telemetry-val" id="valEnzyme" style="font-size: 0.72rem; text-transform: uppercase;">Amilasa</span>
+            <div class="console-row">
+                <span>Gravedad:</span>
+                <span class="console-val">0.82 G</span>
             </div>
 
-            <div class="hud-header">Diagnósticos Tisulares</div>
-
-            <div class="hud-bar-group">
-                <div class="hud-slider-label">
-                    <span>Digestión Química</span>
-                    <span id="txtBarChemical">10%</span>
-                </div>
-                <div class="hud-bar-bg">
-                    <div class="hud-bar-fill" id="barChemical" style="width: 10%;"></div>
-                </div>
-            </div>
-
-            <div class="hud-bar-group">
-                <div class="hud-slider-label">
-                    <span>Absorción de Nutrientes</span>
-                    <span id="txtBarAbsorption">0%</span>
-                </div>
-                <div class="hud-bar-bg">
-                    <div class="hud-bar-fill" id="barAbsorption" style="width: 0%;"></div>
-                </div>
-            </div>
-
-            <div class="hud-bar-group">
-                <div class="hud-slider-label">
-                    <span>Fluidez del Bolo</span>
-                    <span id="txtBarPeristalsis">85%</span>
-                </div>
-                <div class="hud-bar-bg">
-                    <div class="hud-bar-fill" id="barPeristalsis" style="width: 85%;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- CENTER AREA: CLINICAL CONSOLE FEED -->
-        <div class="hud-bottom">
-            <div class="medical-console ui-panel-interactive" id="consoleFeed">
-                <div class="console-line">
-                    <span class="tag">[SYSTEM]</span>
-                    <span class="txt">Visor AR acoplado con éxito. Esperando bolo alimenticio...</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- RIGHT SIDEBAR: CAMERA CONTROLS & DYNAMIC SLIDERS -->
-        <div class="hud-panel hud-right ui-panel-interactive">
-            <div class="hud-header">Navegación Visual</div>
-
-            <!-- Ingest Trigger Button -->
-            <button class="ingest-btn" id="btnIngest" style="background: linear-gradient(135deg, #007a8c, #00ff66); color: #010408; font-family: var(--font-sci-fi); border:none; margin-bottom: 5px;">
-                Ingerir Alimento 🍎
-            </button>
-
-            <!-- Endoscopy Camera Mode Toggle -->
-            <button class="mode-btn" id="btnEndoMode">
-                <span>🎥 Iniciar Endoscopia 1ª Persona</span>
-            </button>
-
-            <div class="hud-header">Calibradores Bioquímicos</div>
-
-            <div class="hud-slider-group">
-                <div class="hud-slider-label">
-                    <span>pH Gástrico (Ácido)</span>
-                    <span id="lblPhVal">1.8</span>
-                </div>
-                <input type="range" class="hud-slider" id="sldPh" min="1.0" max="6.5" step="0.1" value="1.8">
-            </div>
-
-            <div class="hud-slider-group">
-                <div class="hud-slider-label">
-                    <span>Flujo Peristáltico</span>
-                    <span id="lblSpeedVal">1.0x</span>
-                </div>
-                <input type="range" class="hud-slider" id="sldSpeed" min="0.2" max="2.5" step="0.1" value="1.0">
-            </div>
-
-            <div class="hud-header">Biosonido de Fluido</div>
+            <div class="console-header">Modulador de Espectro</div>
             
-            <div class="visualizer-area" style="height: 90px; border: 1px solid rgba(0, 243, 255, 0.1); background: rgba(0,0,0,0.5);">
+            <div class="spectrum-grid">
+                <button class="spectrum-btn active" data-theme="nebula">Nébula</button>
+                <button class="spectrum-btn" data-theme="supernova">Nova</button>
+                <button class="spectrum-btn" data-theme="void">Vació</button>
+            </div>
+
+            <div class="console-header">Onda de Audio Espacial</div>
+            <div class="console-visualizer">
                 <canvas id="oscilloscope"></canvas>
             </div>
+        </section>
+
+        <!-- BOTTOM CONSOLE FEED LOGGER -->
+        <div class="hud-bottom" style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 100;">
+            <div class="medical-console ui-panel-interactive" id="consoleFeed" style="border-radius: 8px 8px 0 0; width: 420px;">
+                <div class="console-line">
+                    <span class="tag">[AETHER]</span>
+                    <span class="txt">Sistemas listos. Coordenadas fijadas en Proxima-Centauri d.</span>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <div class="hud-center-reticle"></div>
-
-    <!-- WebGL Libraries (CDNs estables) -->
+    <!-- WebGL Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // --- Estado General ---
+        // --- System State parameters ---
         const state = {
             initialized: false,
-            activeOrgan: 'esophagus',
-            endoscopyActive: false,
-            phStomach: 1.8,
-            peristalsisSpeed: 1.0,
+            theme: 'nebula', // 'nebula', 'supernova', 'void'
+            planetSpeed: 1.0,
             volume: 0.6,
-            foodInTransit: false,
-            bolusProgress: 0.0,
-            timeScale: 0
+            lightRotation: 0,
+            mouseX: 0, mouseY: 0 // Parallax tracking
         };
 
-        const organSpecs = {
-            esophagus: {
-                name: 'Esófago',
-                ph: '7.0',
-                enzyme: 'Amilasa Salival',
-                chemical: 10,
-                absorption: 0,
-                peristalsis: 95,
-                pos3d: new THREE.Vector3(0, 1.8, 0),
-                log: 'Esófago despejado. Movimiento peristáltico óptimo.'
+        const themeData = {
+            nebula: {
+                primary: '#00f0ff',
+                violet: '#7000ff',
+                planetColor: '#1a3c6e',
+                atmosphereColor: '#00f0ff',
+                glowColor: '#00f0ff'
             },
-            stomach: {
-                name: 'Estómago',
-                ph: '1.8',
-                enzyme: 'Pepsina & HCl',
-                chemical: 68,
-                absorption: 5,
-                peristalsis: 60,
-                pos3d: new THREE.Vector3(-0.4, 0.4, 0),
-                log: 'Ácido Clorhídrico activo. Desnaturalización de proteínas en progreso.'
+            supernova: {
+                primary: '#ff6c00',
+                violet: '#ff0055',
+                planetColor: '#70220c',
+                atmosphereColor: '#ff4c00',
+                glowColor: '#ff6c00'
             },
-            small_int: {
-                name: 'Intestino Delgado',
-                ph: '7.4',
-                enzyme: 'Lipasa y Proteasas',
-                chemical: 90,
-                absorption: 88,
-                peristalsis: 45,
-                pos3d: new THREE.Vector3(0, -1.0, 0),
-                log: 'Nutrientes ingresando al intestino delgado. Absorción celular activa.'
-            },
-            large_int: {
-                name: 'Intestino Grueso',
-                ph: '6.8',
-                enzyme: 'Flora Bacteriana',
-                chemical: 98,
-                absorption: 98,
-                peristalsis: 20,
-                pos3d: new THREE.Vector3(0.5, -0.6, 0.3),
-                log: 'Reabsorción de agua en el colon. Solidificación del quimo.'
+            void: {
+                primary: '#a8a8a8',
+                violet: '#151525',
+                planetColor: '#1d1d29',
+                atmosphereColor: '#444455',
+                glowColor: '#888888'
             }
         };
 
-        // --- Variables Gráficas ---
+        // --- Three.js graphics ---
         let scene, camera, renderer, controls;
-        let esophagusTube, stomachMesh, stomachAcidMesh, smallIntestineTube, largeIntestineTube;
-        let liverMesh, ambientDust, bolusMesh, absorptionParticles;
-        let endoscopyCurve, pathCurve;
-        let biometricLabels = [];
+        let starfield, planetMesh, planetAtmosphere, planetaryRings;
+        let pointLight1, pointLight2;
+        const particleTextureCache = {};
 
-        // --- Variables de Sonido ---
+        // --- Web Audio procedurals ---
         let audioCtx = null, masterGainNode = null, analyser = null;
-        let stomachAcidSizzleGain = null, bodyFluidGain = null, heartbeatGain = null;
+        let ambientPadOsc1, ambientPadOsc2, padGain, lfoFilterNode;
         let oscilloscopeCanvas, oscilloscopeCtx;
 
         const DOM = {
-            splash: document.getElementById('splashScreen'),
-            initializeBtn: document.getElementById('initializeBtn'),
-            clock: document.getElementById('systemClock'),
-            sldPh: document.getElementById('sldPh'),
-            lblPhVal: document.getElementById('lblPhVal'),
-            sldSpeed: document.getElementById('sldSpeed'),
-            lblSpeedVal: document.getElementById('lblSpeedVal'),
-            valOrganName: document.getElementById('valOrganName'),
-            valOrganPh: document.getElementById('valOrganPh'),
-            valEnzyme: document.getElementById('valEnzyme'),
-            txtBarChemical: document.getElementById('txtBarChemical'),
-            barChemical: document.getElementById('barChemical'),
-            txtBarAbsorption: document.getElementById('txtBarAbsorption'),
-            barAbsorption: document.getElementById('barAbsorption'),
-            txtBarPeristalsis: document.getElementById('txtBarPeristalsis'),
-            barPeristalsis: document.getElementById('barPeristalsis'),
-            btnIngest: document.getElementById('btnIngest'),
-            btnEndoMode: document.getElementById('btnEndoMode'),
-            endoIndicator: document.getElementById('endoIndicator'),
+            introScreen: document.getElementById('introScreen'),
+            enterBtn: document.getElementById('enterBtn'),
             consoleFeed: document.getElementById('consoleFeed'),
-            bioLabelsContainer: document.getElementById('bioLabelsContainer')
+            btnCta: document.getElementById('btnCta'),
+            spectrumButtons: document.querySelectorAll('.spectrum-btn')
         };
 
-        function logClinical(tag, msg, isWarning = false) {
+        function logSystem(tag, text) {
             const timestamp = `[${new Date().toLocaleTimeString()}]`;
             const line = document.createElement('div');
             line.className = 'console-line';
-            if (isWarning) line.style.color = 'var(--clr-hud-red)';
-            line.innerHTML = `<span class="tag">${timestamp} [${tag}]</span><span class="txt">${msg}</span>`;
+            line.innerHTML = `<span class="tag">${timestamp} [${tag}]</span><span class="txt">${text}</span>`;
             DOM.consoleFeed.appendChild(line);
-            while (DOM.consoleFeed.children.length > 3) {
+            while (DOM.consoleFeed.children.length > 2) {
                 DOM.consoleFeed.removeChild(DOM.consoleFeed.firstChild);
             }
         }
 
-        // ==========================================================================
-        // 1. CARGADOR DE LIBRERÍAS ASÍNCRONO (EVITA ERRORES EN CODEPEN)
-        // ==========================================================================
-        DOM.initializeBtn.addEventListener('click', () => {
-            // Comprobador de descargas
+        // Mouse Parallax listener
+        window.addEventListener('mousemove', (e) => {
+            state.mouseX = (e.clientX / window.innerWidth) - 0.5;
+            state.mouseY = (e.clientY / window.innerHeight) - 0.5;
+        });
+
+        // Initialize Launch
+        DOM.enterBtn.addEventListener('click', () => {
             if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') {
-                DOM.initializeBtn.textContent = "CARGANDO BIOSISTEMAS...";
-                DOM.initializeBtn.style.borderColor = "#ff0055";
-                DOM.initializeBtn.style.color = "#ff0055";
+                DOM.enterBtn.textContent = "CARGANDO UNIVERSO...";
+                DOM.enterBtn.style.borderColor = "#ff6c00";
+                DOM.enterBtn.style.color = "#ff6c00";
                 
-                // Reintentar en bucle cada 150ms automáticamente
-                const checkInterval = setInterval(() => {
+                const checkLoader = setInterval(() => {
                     if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined') {
-                        clearInterval(checkInterval);
-                        launchVisorSystems();
+                        clearInterval(checkLoader);
+                        launchAetherSystems();
                     }
                 }, 150);
             } else {
-                launchVisorSystems();
+                launchAetherSystems();
             }
         });
 
-        function launchVisorSystems() {
-            // Intentar inicializar el sonido (si el iframe de CodePen lo bloquea, el programa no fallará)
+        function launchAetherSystems() {
             try {
                 initAudio();
             } catch(e) {
-                console.warn("AudioContext bloqueado o no soportado por el navegador/iframe.");
+                console.warn("AudioContext blocked by browser policy.");
             }
-
-            // Inicializar el espacio 3D (Siempre cargará independientemente del audio)
             initThree();
-            
-            DOM.splash.classList.add('hidden');
+
+            DOM.introScreen.classList.add('hidden');
             state.initialized = true;
-            logClinical('VISOR', 'Casco Goggles acoplado. Telemetría lista.');
+            logSystem('SYSTEM', 'Líneas hiperespaciales sincronizadas.');
             
-            // Iniciar osciloscopio 2D
             if (analyser) {
                 drawOscilloscope();
             }
-            playSfx('deglution');
+            
+            // Play initial launch SFX
+            playSfx('launch');
         }
 
         // ==========================================================================
-        // 2. SÍNTESIS DE AUDIO BIOQUÍMICA PROCEDURAL (SEGURO CONTRA ERRORES)
+        // 1. PROCEDURAL SPACE-PAD SYNTHESIZER (WEB AUDIO)
         // ==========================================================================
         function initAudio() {
             const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
             if (!AudioCtxClass) return;
-            
+
             audioCtx = new AudioCtxClass();
             masterGainNode = audioCtx.createGain();
-            masterGainNode.gain.setValueAtTime(state.volume * 0.22, audioCtx.currentTime);
+            masterGainNode.gain.setValueAtTime(state.volume * 0.25, audioCtx.currentTime);
 
             analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 512;
+            analyser.fftSize = 256;
             masterGainNode.connect(analyser);
             analyser.connect(audioCtx.destination);
 
-            // Ruido de fondo para fluidos estomacales
-            const noiseSize = audioCtx.sampleRate * 2.5;
-            const noiseBuffer = audioCtx.createBuffer(1, noiseSize, audioCtx.sampleRate);
-            const noiseOutput = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < noiseSize; i++) {
-                noiseOutput[i] = Math.random() * 2 - 1;
-            }
-
-            const noiseSrc = audioCtx.createBufferSource();
-            noiseSrc.buffer = noiseBuffer;
-            noiseSrc.loop = true;
-
-            const noiseFilter = audioCtx.createBiquadFilter();
-            noiseFilter.type = 'lowpass';
-            noiseFilter.frequency.setValueAtTime(80, audioCtx.currentTime);
-
-            const fluidLfo = audioCtx.createOscillator();
-            fluidLfo.type = 'sine';
-            fluidLfo.frequency.setValueAtTime(0.1, audioCtx.currentTime);
-
-            const fluidLfoGain = audioCtx.createGain();
-            fluidLfoGain.gain.setValueAtTime(35, audioCtx.currentTime);
-
-            fluidLfo.connect(fluidLfoGain);
-            fluidLfoGain.connect(noiseFilter.frequency);
-            noiseSrc.connect(noiseFilter);
-
-            bodyFluidGain = audioCtx.createGain();
-            bodyFluidGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            noiseFilter.connect(bodyFluidGain);
-            bodyFluidGain.connect(masterGainNode);
-
-            noiseSrc.start();
-            fluidLfo.start();
-
-            // Siseo de ácido
-            const acidNoise = audioCtx.createBufferSource();
-            acidNoise.buffer = noiseBuffer;
-            acidNoise.loop = true;
-
-            const acidFilter = audioCtx.createBiquadFilter();
-            acidFilter.type = 'bandpass';
-            acidFilter.frequency.setValueAtTime(2900, audioCtx.currentTime);
-            acidFilter.Q.setValueAtTime(2.0, audioCtx.currentTime);
-
-            stomachAcidSizzleGain = audioCtx.createGain();
-            stomachAcidSizzleGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-
-            acidNoise.connect(acidFilter);
-            acidFilter.connect(stomachAcidSizzleGain);
-            stomachAcidSizzleGain.connect(masterGainNode);
-            acidNoise.start();
-
-            // Latidos
-            heartbeatGain = audioCtx.createGain();
-            heartbeatGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            heartbeatGain.connect(masterGainNode);
-
-            setInterval(() => {
-                if (audioCtx) playHeartBeat();
-            }, 1000);
-        }
-
-        function playHeartBeat() {
-            if (!audioCtx) return;
-            const t = audioCtx.currentTime;
+            // Synthesize Deep Space Ambient Synth Pad (detuned triangle wave oscillators)
+            ambientPadOsc1 = audioCtx.createOscillator();
+            ambientPadOsc2 = audioCtx.createOscillator();
             
-            const beat = (timeOffset, pitch, vol) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(55, t + timeOffset);
-                osc.frequency.exponentialRampToValueAtTime(10, t + timeOffset + 0.15);
-                
-                gain.gain.setValueAtTime(0.0, t + timeOffset);
-                gain.gain.linearRampToValueAtTime(vol, t + timeOffset + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.0001, t + timeOffset + 0.18);
-                
-                osc.connect(gain);
-                gain.connect(heartbeatGain);
-                osc.start(t + timeOffset);
-                osc.stop(t + timeOffset + 0.2);
-            };
+            ambientPadOsc1.type = 'triangle';
+            ambientPadOsc2.type = 'sawtooth';
 
-            const isEndo = state.endoscopyActive;
-            const volumeCoeff = isEndo ? 0.8 : 0.25;
-            
-            beat(0, 50, volumeCoeff);
-            beat(0.18, 48, volumeCoeff * 0.7);
+            // Detuned beautiful minor chord tone (C3 and G3 fifth chord)
+            ambientPadOsc1.frequency.setValueAtTime(130.81, audioCtx.currentTime); // C3
+            ambientPadOsc2.frequency.setValueAtTime(195.99, audioCtx.currentTime); // G3 (fifth note)
+            ambientPadOsc2.detune.setValueAtTime(8, audioCtx.currentTime); // slight detuning for rich chorus
+
+            // Bio-resonant lowpass filter to warm the synth
+            lfoFilterNode = audioCtx.createBiquadFilter();
+            lfoFilterNode.type = 'lowpass';
+            lfoFilterNode.frequency.setValueAtTime(150, audioCtx.currentTime);
+            lfoFilterNode.Q.setValueAtTime(5.0, audioCtx.currentTime);
+
+            // Filter Sweep LFO (breathes life into space pad)
+            const sweepLfo = audioCtx.createOscillator();
+            sweepLfo.type = 'sine';
+            sweepLfo.frequency.setValueAtTime(0.08, audioCtx.currentTime); // very slow 0.08 Hz sweep
+
+            const sweepLfoGain = audioCtx.createGain();
+            sweepLfoGain.gain.setValueAtTime(70, audioCtx.currentTime); // oscillates filter cutoff by 70Hz
+
+            sweepLfo.connect(sweepLfoGain);
+            sweepLfoGain.connect(lfoFilterNode.frequency);
+
+            padGain = audioCtx.createGain();
+            padGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
+
+            ambientPadOsc1.connect(lfoFilterNode);
+            ambientPadOsc2.connect(lfoFilterNode);
+            lfoFilterNode.connect(padGain);
+            padGain.connect(masterGainNode);
+
+            ambientPadOsc1.start();
+            ambientPadOsc2.start();
+            sweepLfo.start();
+
+            oscilloscopeCanvas = document.getElementById('oscilloscope');
+            oscilloscopeCtx = oscilloscopeCanvas.getContext('2d');
+            resizeOscilloscope();
+            window.addEventListener('resize', resizeOscilloscope);
         }
 
         function playSfx(type) {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
-            if (type === 'deglution') {
+
+            if (type === 'hover') {
                 const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, t);
+                osc.frequency.exponentialRampToValueAtTime(1800, t + 0.06);
+                
+                gain.gain.setValueAtTime(0.012, t);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
+                
+                osc.connect(gain);
+                gain.connect(masterGainNode);
+                osc.start(); osc.stop(t + 0.07);
+            }
+            else if (type === 'launch') {
+                // Giant space warp sweep (FM sweep up and down)
+                const carrier = audioCtx.createOscillator();
                 const mod = audioCtx.createOscillator();
                 const modGain = audioCtx.createGain();
                 const gain = audioCtx.createGain();
-                
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(250, t);
-                osc.frequency.exponentialRampToValueAtTime(50, t + 0.55);
-                
+
+                carrier.type = 'sawtooth';
+                carrier.frequency.setValueAtTime(60, t);
+                carrier.frequency.exponentialRampToValueAtTime(800, t + 0.4);
+                carrier.frequency.exponentialRampToValueAtTime(120, t + 1.2);
+
                 mod.type = 'sine';
-                mod.frequency.setValueAtTime(45, t);
-                modGain.gain.setValueAtTime(120, t);
-                
+                mod.frequency.setValueAtTime(25, t);
+                modGain.gain.setValueAtTime(220, t);
+
                 gain.gain.setValueAtTime(0.35, t);
-                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-                
+                gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
+
                 mod.connect(modGain);
-                modGain.connect(osc.frequency);
-                osc.connect(gain);
+                modGain.connect(carrier.frequency);
+                carrier.connect(gain);
                 gain.connect(masterGainNode);
-                
-                osc.start(); mod.start();
-                osc.stop(t + 0.65); mod.stop(t + 0.65);
-            }
-            else if (type === 'absorb') {
-                const chime = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                chime.type = 'sine';
-                chime.frequency.setValueAtTime(880, t);
-                chime.frequency.exponentialRampToValueAtTime(1760, t + 0.3);
-                gain.gain.setValueAtTime(0.05, t);
-                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
-                chime.connect(gain);
-                gain.connect(masterGainNode);
-                chime.start(); chime.stop(t + 0.45);
-            }
-        }
 
-        function adjustEndoscopicAudioFilter(active) {
-            if (!audioCtx || !bodyFluidGain) return;
-            const t = audioCtx.currentTime;
-            if (active) {
-                bodyFluidGain.gain.setTargetAtTime(0.85, t, 0.2);
-            } else {
-                bodyFluidGain.gain.setTargetAtTime(0.5, t, 0.2);
+                carrier.start(); mod.start();
+                carrier.stop(t + 1.4); mod.stop(t + 1.4);
             }
         }
 
         // ==========================================================================
-        // 3. DISEÑO DE ÓRGANOS 3D PBR (MÁXIMO REALISMO TISULAR)
+        // 2. BIOLUMINESCENT PLANET 3D SCENE (THREE.JS)
         // ==========================================================================
-        function generateVascularTexture(baseColorHex) {
+        function getParticleTexture(colorHex) {
+            if (particleTextureCache[colorHex]) return particleTextureCache[colorHex];
             const canvas = document.createElement('canvas');
-            canvas.width = 256; canvas.height = 256;
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.2, '#ffffff');
+            grad.addColorStop(0.4, colorHex);
+            grad.addColorStop(0.8, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 64, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            particleTextureCache[colorHex] = texture;
+            return texture;
+        }
+
+        // Draw planet continents procedural map using a Canvas texture!
+        function generateProceduralPlanetTexture(landColorHex, oceanColorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
             const ctx = canvas.getContext('2d');
             
-            ctx.fillStyle = baseColorHex;
-            ctx.fillRect(0, 0, 256, 256);
+            // Draw ocean base
+            ctx.fillStyle = oceanColorHex;
+            ctx.fillRect(0, 0, 512, 256);
             
-            ctx.strokeStyle = '#8b1e3f';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < 15; i++) {
+            // Generate glowing bioluminescent continents
+            ctx.fillStyle = landColorHex;
+            for (let i = 0; i < 20; i++) {
+                const rx = Math.random() * 512;
+                const ry = Math.random() * 256;
+                const rRadius = 30 + Math.random() * 65;
                 ctx.beginPath();
-                let x = Math.random() * 256;
-                let y = Math.random() * 256;
-                ctx.moveTo(x, y);
-                for (let j = 0; j < 6; j++) {
-                    x += (Math.random() - 0.5) * 45;
-                    y += (Math.random() - 0.5) * 45;
-                    ctx.lineTo(x, y);
-                }
-                ctx.stroke();
+                ctx.arc(rx, ry, rRadius, 0, Math.PI * 2);
+                ctx.fill();
             }
             
-            for(let i=0; i<1200; i++) {
-                const rx = Math.random() * 256;
-                const ry = Math.random() * 256;
-                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)';
-                ctx.fillRect(rx, ry, 2, 2);
+            // Capillaries and plasma lines
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 1;
+            for(let i=0; i<8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * 512, Math.random() * 256);
+                ctx.bezierCurveTo(Math.random()*512, Math.random()*256, Math.random()*512, Math.random()*256, Math.random()*512, Math.random()*256);
+                ctx.stroke();
             }
 
             const tex = new THREE.CanvasTexture(canvas);
-            tex.wrapS = THREE.RepeatWrapping;
-            tex.wrapT = THREE.RepeatWrapping;
-            tex.repeat.set(2, 2);
             return tex;
-        }
-
-        function getCircleTexture(colorStr = '#ffffff') {
-            const canvas = document.createElement('canvas');
-            canvas.width = 32; canvas.height = 32;
-            const ctx = canvas.getContext('2d');
-            const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.3, colorStr);
-            grad.addColorStop(0.8, 'rgba(0,0,0,0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0,0, 32,32);
-            return new THREE.CanvasTexture(canvas);
         }
 
         function initThree() {
             const container = document.getElementById('canvas3d');
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2('#010408', 0.045);
+            scene.fog = new THREE.FogExp2('#020208', 0.05);
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 100);
-            camera.position.set(0, 0.5, 7.8);
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 0.2, 7.5);
 
             renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -970,491 +807,159 @@
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxDistance = 14;
-            controls.minDistance = 2.5;
+            controls.maxDistance = 12;
+            controls.minDistance = 3.5;
+            controls.enableZoom = true;
+            controls.autoRotate = false;
 
-            const sunlight = new THREE.DirectionalLight('#ffffff', 1.8);
-            sunlight.position.set(5, 8, 5);
-            scene.add(sunlight);
+            // Dramatic outer space lighting
+            const theme = themeData[state.theme];
             
-            const fillLight = new THREE.DirectionalLight('#ff99bb', 0.7);
-            fillLight.position.set(-5, 2, -3);
-            scene.add(fillLight);
-            
-            const ambientLight = new THREE.AmbientLight('#081528', 0.9);
+            pointLight1 = new THREE.PointLight(theme.primary, 3.5, 25);
+            pointLight1.position.set(4, 3, 3);
+            scene.add(pointLight1);
+
+            pointLight2 = new THREE.PointLight(theme.violet, 2.0, 30);
+            pointLight2.position.set(-5, -3, -4);
+            scene.add(pointLight2);
+
+            const ambientLight = new THREE.AmbientLight('#07071d', 0.85);
             scene.add(ambientLight);
 
-            buildRealisticOrgans3D();
-            buildAnatomicalBiometricLabels();
-            buildEnvironmentBloodCells();
+            buildPlanetaryGlows();
+            buildInteractiveStarfield();
 
-            renderer.setAnimationLoop(renderLoop);
+            window.addEventListener('resize', onWindowResize);
         }
 
-        function buildRealisticOrgans3D() {
-            const esophagusMat = new THREE.MeshStandardMaterial({
-                color: '#d16278',
-                map: generateVascularTexture('#d16278'),
-                roughness: 0.15,
-                metalness: 0.1,
-                side: THREE.DoubleSide
+        function buildPlanetaryGlows() {
+            if (planetMesh) scene.remove(planetMesh);
+            if (planetAtmosphere) scene.remove(planetAtmosphere);
+            if (planetaryRings) scene.remove(planetaryRings);
+
+            const theme = themeData[state.theme];
+
+            // 1. Exoplanet Core Sphere
+            const planetGeom = new THREE.SphereGeometry(1.6, 64, 64);
+            const planetMat = new THREE.MeshStandardMaterial({
+                color: theme.planetColor,
+                map: generateProceduralPlanetTexture(theme.planetColor, '#0a0a29'),
+                roughness: 0.25,
+                metalness: 0.15,
+                bumpScale: 0.05
+            });
+            planetMesh = new THREE.Mesh(planetGeom, planetMat);
+            scene.add(planetMesh);
+
+            // 2. Translucent Atmosphere Halo (Additive blending)
+            const atmoGeom = new THREE.SphereGeometry(1.68, 32, 32);
+            const atmoMat = new THREE.MeshBasicMaterial({
+                color: theme.atmosphereColor,
+                transparent: true,
+                opacity: 0.25,
+                blending: THREE.AdditiveBlending,
+                side: THREE.BackSide
+            });
+            planetAtmosphere = new THREE.Mesh(atmoGeom, atmoMat);
+            scene.add(planetAtmosphere);
+
+            // 3. Floating Space Ring System (Thousands of orbital particles)
+            const ringCount = 2000;
+            const ringGeom = new THREE.BufferGeometry();
+            const pos = new Float32Array(ringCount * 3);
+            const innerRadius = 2.4;
+            const outerRadius = 3.8;
+
+            for (let i = 0; i < ringCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const r = innerRadius + Math.random() * (outerRadius - innerRadius);
+                
+                pos[i*3] = r * Math.cos(angle);
+                pos[i*3+1] = (Math.random() - 0.5) * 0.08; // flat ring thickness
+                pos[i*3+2] = r * Math.sin(angle);
+            }
+
+            ringGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const ringMat = new THREE.PointsMaterial({
+                size: 0.07,
+                map: getParticleTexture(theme.primary),
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
 
-            const stomachMat = new THREE.MeshStandardMaterial({
-                color: '#de5b73',
-                map: generateVascularTexture('#de5b73'),
-                roughness: 0.1,
-                metalness: 0.05,
-                side: THREE.DoubleSide
-            });
-
-            const smallIntMat = new THREE.MeshStandardMaterial({
-                color: '#e0798e',
-                map: generateVascularTexture('#e0798e'),
-                roughness: 0.22,
-                metalness: 0.08
-            });
-
-            const largeIntMat = new THREE.MeshStandardMaterial({
-                color: '#c2858b',
-                map: generateVascularTexture('#c2858b'),
-                roughness: 0.3,
-                metalness: 0.1
-            });
-
-            // 1. Esófago
-            const esophagusPath = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(0, 3.8, 0),
-                new THREE.Vector3(0, 2.5, -0.05),
-                new THREE.Vector3(-0.05, 1.4, -0.1)
-            ]);
-            esophagusTube = new THREE.Mesh(
-                new THREE.TubeGeometry(esophagusPath, 32, 0.14, 12, false),
-                esophagusMat
-            );
-            scene.add(esophagusTube);
-
-            // 2. Estómago
-            const stomachGeom = new THREE.SphereGeometry(0.72, 48, 48);
-            const pos = stomachGeom.attributes.position;
-            for (let i = 0; i < pos.count; i++) {
-                const x = pos.getX(i);
-                const y = pos.getY(i);
-                const z = pos.getZ(i);
-                const bend = Math.sin(y * 1.8) * 0.45;
-                const bulge = 1.3 - y * 0.25;
-                const wrinkle = Math.sin(x * 12) * Math.cos(z * 12) * 0.035;
-                pos.setX(i, x * 1.5 * bulge + bend + wrinkle);
-                pos.setY(i, y * 0.9 + wrinkle);
-                pos.setZ(i, z * 0.95 * bulge - (x * 0.15) + wrinkle);
-            }
-            stomachGeom.computeVertexNormals();
-
-            stomachMesh = new THREE.Mesh(stomachGeom, stomachMat);
-            stomachMesh.position.set(-0.4, 0.55, -0.05);
-            stomachMesh.rotation.z = -Math.PI / 10;
-            scene.add(stomachMesh);
-
-            // Ácido estomacal
-            const acidGeom = new THREE.SphereGeometry(0.48, 24, 24);
-            const acidPos = acidGeom.attributes.position;
-            for (let i = 0; i < acidPos.count; i++) {
-                acidPos.setX(i, acidPos.getX(i) * 1.3);
-                acidPos.setY(i, acidPos.getY(i) * 0.45 - 0.2);
-            }
-            acidGeom.computeVertexNormals();
-            stomachAcidMesh = new THREE.Mesh(
-                acidGeom,
-                new THREE.MeshStandardMaterial({
-                    color: 0x00ff66,
-                    emissive: 0x00ff66,
-                    emissiveIntensity: 0.7,
-                    transparent: true,
-                    opacity: 0.65,
-                    roughness: 0.05
-                })
-            );
-            stomachAcidMesh.position.set(-0.4, 0.48, -0.05);
-            scene.add(stomachAcidMesh);
-
-            // 3. Hígado realista de soporte
-            const liverGeom = new THREE.SphereGeometry(0.85, 32, 32);
-            const liverPos = liverGeom.attributes.position;
-            for (let i = 0; i < liverPos.count; i++) {
-                const x = liverPos.getX(i);
-                const y = liverPos.getY(i);
-                const z = liverPos.getZ(i);
-                liverPos.setX(i, x * 1.8 + y * 0.4);
-                liverPos.setY(i, y * 0.8 - x * 0.2);
-                liverPos.setZ(i, z * 0.8 + x * 0.3);
-            }
-            liverGeom.computeVertexNormals();
-            liverMesh = new THREE.Mesh(
-                liverGeom,
-                new THREE.MeshStandardMaterial({
-                    color: '#701c1c',
-                    roughness: 0.35,
-                    metalness: 0.1
-                })
-            );
-            liverMesh.position.set(0.68, 0.82, -0.2);
-            scene.add(liverMesh);
-
-            // 4. Intestino Delgado
-            const smallIntPoints = [];
-            const segments = 550;
-            for (let i = 0; i <= segments; i++) {
-                const t = (i / segments) * Math.PI * 22;
-                const r = 0.52 + Math.sin(t * 2.2) * 0.16;
-                const x = Math.sin(t) * r;
-                const y = -0.32 - (i / segments) * 1.4 + Math.cos(t * 4.0) * 0.05;
-                const z = Math.cos(t) * r;
-                smallIntPoints.push(new THREE.Vector3(x, y, z));
-            }
-            const smallIntPath = new THREE.CatmullRomCurve3(smallIntPoints);
-            smallIntestineTube = new THREE.Mesh(
-                new THREE.TubeGeometry(smallIntPath, 250, 0.1, 8, false),
-                smallIntMat
-            );
-            scene.add(smallIntestineTube);
-
-            // 5. Intestino Grueso (Segmentado con Haustras orgánicas)
-            const largeIntPoints = [
-                new THREE.Vector3(0.55, -1.8, 0.1),
-                new THREE.Vector3(0.7, -1.8, 0.1),
-                new THREE.Vector3(0.75, -0.1, 0.1),
-                new THREE.Vector3(-0.75, -0.1, 0.1),
-                new THREE.Vector3(-0.8, -1.9, 0.1),
-                new THREE.Vector3(-0.15, -2.0, 0.1),
-                new THREE.Vector3(-0.15, -2.6, 0.1)
-            ];
-            const largeIntPath = new THREE.CatmullRomCurve3(largeIntPoints);
-            const largeIntGeom = new THREE.TubeGeometry(largeIntPath, 90, 0.18, 12, false);
-            const largeIntPos = largeIntGeom.attributes.position;
-            for (let i = 0; i < largeIntPos.count; i++) {
-                const x = largeIntPos.getX(i);
-                const z = largeIntPos.getZ(i);
-                const segmentIndex = Math.floor(i / 14);
-                const haustraFactor = 1.0 + Math.sin(segmentIndex * 1.4) * 0.18;
-                largeIntPos.setX(i, x * haustraFactor);
-                largeIntPos.setZ(i, z * haustraFactor);
-            }
-            largeIntGeom.computeVertexNormals();
-
-            largeIntestineTube = new THREE.Mesh(largeIntGeom, largeIntMat);
-            scene.add(largeIntestineTube);
-
-            // Ruta de Endoscopia (cámara en primera persona)
-            const endoPoints = [
-                new THREE.Vector3(0, 3.8, 0),
-                new THREE.Vector3(0, 2.5, -0.05),
-                new THREE.Vector3(-0.02, 1.6, -0.08),
-                new THREE.Vector3(-0.25, 0.9, -0.05),
-                new THREE.Vector3(-0.4, 0.65, -0.03),
-                new THREE.Vector3(-0.45, 0.45, -0.03),
-                new THREE.Vector3(-0.2, 0.28, -0.08)
-            ];
-            endoscopyCurve = new THREE.CatmullRomCurve3(endoPoints);
-
-            // Bolo alimenticio
-            const bolusGeom = new THREE.SphereGeometry(0.12, 16, 16);
-            bolusMesh = new THREE.Mesh(
-                bolusGeom,
-                new THREE.MeshStandardMaterial({
-                    color: 0x00ff66,
-                    emissive: 0x00ff66,
-                    emissiveIntensity: 0.8,
-                    roughness: 0.05
-                })
-            );
-            bolusMesh.material.opacity = 0;
-            bolusMesh.material.transparent = true;
-            scene.add(bolusMesh);
-
-            // Partículas de absorción
-            const absCount = 200;
-            const absGeom = new THREE.BufferGeometry();
-            const absPos = new Float32Array(absCount * 3);
-            const absSpeed = [];
-            for (let i = 0; i < absCount; i++) {
-                absPos[i*3] = 0; absPos[i*3+1] = 9999; absPos[i*3+2] = 0;
-                absSpeed.push({
-                    x: (Math.random() - 0.5) * 0.12,
-                    y: (Math.random() - 0.5) * 0.12,
-                    z: (Math.random() - 0.5) * 0.12,
-                    life: 0
-                });
-            }
-            absGeom.setAttribute('position', new THREE.BufferAttribute(absPos, 3));
-            absorptionParticles = new THREE.Points(
-                absGeom,
-                new THREE.PointsMaterial({
-                    size: 0.08,
-                    map: getCircleTexture('#00f3ff'),
-                    transparent: true,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false,
-                    opacity: 0
-                })
-            );
-            absorptionParticles.userData = { speedList: absSpeed };
-            scene.add(absorptionParticles);
-
-            // Generación de ruta global del bolo
-            const pathPoints = [
-                new THREE.Vector3(0, 3.8, 0),
-                new THREE.Vector3(0, 2.5, -0.05),
-                new THREE.Vector3(-0.05, 1.4, -0.1),
-                new THREE.Vector3(-0.4, 0.9, -0.05),
-                new THREE.Vector3(-0.45, 0.45, -0.03),
-                new THREE.Vector3(-0.2, 0.28, -0.08),
-                ...smallIntPoints,
-                new THREE.Vector3(0.55, -1.8, 0.1),
-                new THREE.Vector3(0.75, -0.1, 0.1),
-                new THREE.Vector3(-0.75, -0.1, 0.1),
-                new THREE.Vector3(-0.8, -1.9, 0.1),
-                new THREE.Vector3(-0.15, -2.6, 0.1)
-            ];
-            pathCurve = new THREE.CatmullRomCurve3(pathPoints);
+            planetaryRings = new THREE.Points(ringGeom, ringMat);
+            planetaryRings.rotation.x = Math.PI / 6; // inclined orbit rings
+            scene.add(planetaryRings);
         }
 
-        function buildEnvironmentBloodCells() {
-            const count = 180;
+        function buildInteractiveStarfield() {
+            if (starfield) scene.remove(starfield);
+
+            const count = 1500;
             const geom = new THREE.BufferGeometry();
             const pos = new Float32Array(count * 3);
-            for(let i=0; i<count; i++) {
-                pos[i*3] = (Math.random() - 0.5) * 12;
-                pos[i*3+1] = (Math.random() - 0.5) * 10;
-                pos[i*3+2] = (Math.random() - 0.5) * 5;
+            
+            for (let i = 0; i < count; i++) {
+                const r = 15 + Math.random() * 30;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos((Math.random() * 2) - 1);
+                
+                pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
+                pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+                pos[i*3+2] = r * Math.cos(phi);
             }
+
             geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            ambientDust = new THREE.Points(
-                geom,
-                new THREE.PointsMaterial({
-                    size: 0.08,
-                    map: getCircleTexture('#ff3c00'),
-                    transparent: true,
-                    opacity: 0.25,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false
-                })
-            );
-            scene.add(ambientDust);
-        }
-
-        // Labels flotantes
-        function buildAnatomicalBiometricLabels() {
-            DOM.bioLabelsContainer.innerHTML = '';
-            biometricLabels = [];
-
-            const addLabel = (key, text) => {
-                const badge = document.createElement('div');
-                badge.className = 'bio-label-3d';
-                badge.innerHTML = `${text}<span class="line-connector"></span>`;
-                badge.dataset.organ = key;
-                
-                badge.addEventListener('click', () => setHighlightedOrgan(key));
-
-                DOM.bioLabelsContainer.appendChild(badge);
-                biometricLabels.push({ element: badge, organKey: key });
-            };
-
-            addLabel('esophagus', 'ESÓFAGO');
-            addLabel('stomach', 'ESTÓMAGO');
-            addLabel('small_int', 'INTESTINO DELGADO');
-            addLabel('large_int', 'INTESTINO GRUESO');
-        }
-
-        function updateBiometricLabelsPositions() {
-            if (!scene || !camera) return;
-            
-            biometricLabels.forEach(label => {
-                const organKey = label.organKey;
-                const spec = organSpecs[organKey];
-                const pos = spec.pos3d.clone();
-                pos.project(camera);
-                
-                const x = (pos.x * .5 + .5) * window.innerWidth;
-                const y = (-(pos.y * .5) + .5) * window.innerHeight;
-                
-                label.element.style.left = `${x}px`;
-                label.element.style.top = `${y - 20}px`;
-                
-                if (state.endoscopyActive) {
-                    label.element.style.opacity = '0';
-                    label.element.style.pointerEvents = 'none';
-                } else {
-                    label.element.style.opacity = pos.z > 1 ? '0' : '1';
-                    label.element.style.pointerEvents = 'auto';
-                }
-
-                if (state.activeOrgan === organKey) {
-                    label.element.classList.add('active');
-                } else {
-                    label.element.classList.remove('active');
-                }
+            const mat = new THREE.PointsMaterial({
+                size: 0.08,
+                map: getCircleTexture('#ffffff'),
+                transparent: true,
+                opacity: 0.45,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             });
+
+            starfield = new THREE.Points(geom, mat);
+            scene.add(starfield);
         }
 
-        function triggerFoodIngestion() {
-            if (state.foodInTransit) return;
-            state.foodInTransit = true;
-            state.bolusProgress = 0.0;
-            bolusMesh.material.opacity = 1.0;
-            
-            playSfx('deglution');
-            logClinical('INGESTA', 'Bolo digestivo ingresando a esófago.');
-        }
-
-        function toggleEndoscopyMode() {
-            state.endoscopyActive = !state.endoscopyActive;
-            
-            if (state.endoscopyActive) {
-                DOM.btnEndoMode.textContent = '🎥 Salir de Endoscopia';
-                DOM.btnEndoMode.classList.add('active');
-                DOM.endoIndicator.classList.add('active');
-                controls.enabled = false;
-                logClinical('ENDO', 'Cámara interna iniciada. Bajando por esófago.', true);
-                adjustEndoscopicAudioFilter(true);
-            } else {
-                DOM.btnEndoMode.textContent = '🎥 Iniciar Endoscopia';
-                DOM.btnEndoMode.classList.remove('active');
-                DOM.endoIndicator.classList.remove('active');
-                
-                controls.enabled = true;
-                camera.position.set(0, 0.5, 7.8);
-                controls.target.set(0, 0, 0);
-                
-                logClinical('SYSTEM', 'Vista giroscópica restaurada.');
-                adjustEndoscopicAudioFilter(false);
-            }
-        }
-
-        // ==========================================================================
-        // 4. ANIMACIÓN Y RENDER LOOP (PROTECCIÓN CONTRA CRASHES)
-        // ==========================================================================
+        // Render Frame Loop
         function renderLoop(time) {
             const elapsed = time * 0.001;
-            
-            state.timeScale += 0.015 * state.peristalsisSpeed;
-            const wave = Math.sin(state.timeScale * 3.5) * 0.02;
 
-            if (esophagusTube) {
-                esophagusTube.scale.set(1.0 + wave, 1.0, 1.0 + wave);
-                smallIntestineTube.scale.set(1.0 + wave * 0.7, 1.0, 1.0 + wave * 0.7);
+            if (controls) controls.update();
+
+            // Rotate exoplanet
+            if (planetMesh) {
+                planetMesh.rotation.y = elapsed * 0.05 * state.planetSpeed;
+                planetAtmosphere.rotation.y = elapsed * 0.06 * state.planetSpeed;
             }
 
-            if (stomachAcidMesh) {
-                stomachAcidMesh.rotation.y = elapsed * 0.4;
-                stomachAcidMesh.rotation.x = Math.sin(elapsed) * 0.05;
+            // Rotate dust rings
+            if (planetaryRings) {
+                planetaryRings.rotation.y = -elapsed * 0.04 * state.planetSpeed;
             }
 
-            if (ambientDust) {
-                ambientDust.rotation.y = elapsed * 0.02;
+            // Slow rotate stars background
+            if (starfield) {
+                starfield.rotation.y = elapsed * 0.005;
             }
 
-            if (state.endoscopyActive && endoscopyCurve) {
-                const cameraProgress = (Math.sin(elapsed * 0.15 - Math.PI/2) * 0.5 + 0.5);
-                const camPos = endoscopyCurve.getPointAt(cameraProgress);
-                camera.position.copy(camPos);
-                
-                const lookTarget = endoscopyCurve.getPointAt(Math.min(1.0, cameraProgress + 0.03));
-                camera.lookAt(lookTarget);
-                
-                if (cameraProgress < 0.35) {
-                    if (state.activeOrgan !== 'esophagus') setHighlightedOrgan('esophagus');
-                } else {
-                    if (state.activeOrgan !== 'stomach') setHighlightedOrgan('stomach');
-                    
-                    // Siseo dinámico de ácido según profundidad de la cámara (Verificado contra fallas)
-                    if (stomachAcidSizzleGain && audioCtx) {
-                        const sizzleDistCoeff = 1.0 - Math.min(1.0, Math.abs(cameraProgress - 0.7) * 3);
-                        const finalSizzle = sizzleDistCoeff * state.volume * 0.3;
-                        stomachAcidSizzleGain.gain.setTargetAtTime(finalSizzle, audioCtx.currentTime, 0.1);
-                    }
-                }
-            } else {
-                if (controls) controls.update();
-                if (stomachAcidSizzleGain && audioCtx) {
-                    stomachAcidSizzleGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-                }
+            // Apply Mouse Parallax to camera for ultra-high immersive feeling
+            if (!state.endoscopyActive && camera) {
+                const targetX = state.mouseX * 2.2;
+                const targetY = state.mouseY * 1.5;
+                camera.position.x += (targetX - camera.position.x) * 0.05;
+                camera.position.y += (targetY - camera.position.y) * 0.05;
             }
 
-            updateBiometricLabelsPositions();
-
-            // Tránsito del bolo
-            if (state.foodInTransit && pathCurve) {
-                state.bolusProgress += 0.0016 * state.peristalsisSpeed;
-                
-                if (state.bolusProgress >= 1.0) {
-                    state.foodInTransit = false;
-                    bolusMesh.material.opacity = 0;
-                    logClinical('GASTRO', 'Tránsito digestivo finalizado.');
-                } else {
-                    const currentPos = pathCurve.getPointAt(state.bolusProgress);
-                    bolusMesh.position.copy(currentPos);
-                    
-                    const p = state.bolusProgress;
-                    if (p < 0.08) {
-                        bolusMesh.material.color.setHex(0x00f3ff);
-                        if (state.activeOrgan !== 'esophagus') setHighlightedOrgan('esophagus');
-                    }
-                    else if (p >= 0.08 && p < 0.25) {
-                        bolusMesh.material.color.setHex(0xff0055);
-                        if (state.activeOrgan !== 'stomach') {
-                            setHighlightedOrgan('stomach');
-                            logClinical('CHEMICAL', 'Bolo en estómago. Licuación ácida activa.');
-                        }
-                        
-                        const dissolveScale = 1.0 - ((p - 0.08) * 1.5);
-                        bolusMesh.scale.set(dissolveScale, dissolveScale, dissolveScale);
-                        
-                        if (stomachAcidSizzleGain && audioCtx) {
-                            stomachAcidSizzleGain.gain.setTargetAtTime(state.volume * 0.15, audioCtx.currentTime, 0.1);
-                        }
-                    }
-                    else if (p >= 0.25 && p < 0.72) {
-                        bolusMesh.material.color.setHex(0x00ff66);
-                        if (stomachAcidSizzleGain && audioCtx) {
-                            stomachAcidSizzleGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.1);
-                        }
-                        
-                        if (state.activeOrgan !== 'small_int') {
-                            setHighlightedOrgan('small_int');
-                            logClinical('ABSORB', 'Bolo entra al Intestino Delgado. Absorbiendo nutrientes.');
-                            playSfx('absorb');
-                        }
-                        
-                        const absPos = absorptionParticles.geometry.attributes.position;
-                        const absSpeed = absorptionParticles.userData.speedList;
-                        absorptionParticles.material.opacity = 0.9;
-                        
-                        for (let i = 0; i < absPos.count; i++) {
-                            const speed = absSpeed[i];
-                            if (speed.life <= 0) {
-                                absPos.setXYZ(i, currentPos.x, currentPos.y, currentPos.z);
-                                speed.x = (Math.random() - 0.5) * 0.12;
-                                speed.y = (Math.random() - 0.5) * 0.12;
-                                speed.z = (Math.random() - 0.5) * 0.12;
-                                speed.life = 30 + Math.random() * 30;
-                            } else {
-                                const rx = absPos.getX(i) + speed.x;
-                                const ry = absPos.getY(i) + speed.y;
-                                const rz = absPos.getZ(i) + speed.z;
-                                absPos.setXYZ(i, rx, ry, rz);
-                                speed.life--;
-                            }
-                        }
-                        absPos.needsUpdate = true;
-                    }
-                    else {
-                        bolusMesh.material.color.setHex(0xc2858b);
-                        if (absorptionParticles) {
-                            absorptionParticles.material.opacity = Math.max(0, absorptionParticles.material.opacity - 0.02);
-                        }
-                        if (state.activeOrgan !== 'large_int') setHighlightedOrgan('large_int');
-                    }
-                }
+            // Animate dynamic point lights
+            if (pointLight1 && pointLight2) {
+                state.lightRotation += 0.004;
+                pointLight1.position.x = Math.sin(state.lightRotation) * 6;
+                pointLight1.position.z = Math.cos(state.lightRotation) * 6;
             }
 
             renderer.render(scene, camera);
@@ -1467,28 +972,20 @@
             resizeOscilloscope();
         }
 
-        // ==========================================================================
-        // 5. INTERFAZ HUD TELEMETRÍA Y OSCILOSCOPIO 2D
-        // ==========================================================================
-        function setHighlightedOrgan(organKey) {
-            state.activeOrgan = organKey;
-            const spec = organSpecs[organKey];
-            DOM.valOrganName.textContent = spec.name;
-            DOM.valOrganPh.textContent = organKey === 'stomach' ? state.phStomach.toFixed(1) : spec.ph;
-            DOM.valEnzyme.textContent = spec.enzyme;
-
-            DOM.barChemical.style.width = `${spec.chemical}%`;
-            DOM.txtBarChemical.textContent = `${spec.chemical}%`;
-
-            DOM.barAbsorption.style.width = `${spec.absorption}%`;
-            DOM.txtBarAbsorption.textContent = `${spec.absorption}%`;
-
-            DOM.barPeristalsis.style.width = `${spec.peristalsis}%`;
-            DOM.txtBarPeristalsis.textContent = `${spec.peristalsis}%`;
-
-            logClinical('ANATOMÍA', spec.log);
+        function updatePlanetaryTheme() {
+            const theme = themeData[state.theme];
+            
+            buildPlanetaryGlows();
+            
+            pointLight1.color.set(theme.primary);
+            pointLight2.color.set(theme.violet);
+            
+            logSystem('SPECTRUM', `Modulando espectro estelar a: ${state.theme.toUpperCase()}`);
         }
 
+        // ==========================================================================
+        // 3. HUD TELEMETRY & OSCILLOSCOPE
+        // ==========================================================================
         function resizeOscilloscope() {
             if(!oscilloscopeCanvas) return;
             const rect = oscilloscopeCanvas.parentElement.getBoundingClientRect();
@@ -1505,20 +1002,20 @@
             const dataArray = new Uint8Array(bufferLength);
             analyser.getByteTimeDomainData(dataArray);
 
-            oscilloscopeCtx.fillStyle = 'rgba(0, 8, 20, 0.4)';
+            oscilloscopeCtx.fillStyle = 'rgba(0, 0, 0, 0.4)';
             oscilloscopeCtx.fillRect(0, 0, w, h);
 
             oscilloscopeCtx.lineWidth = 2.0;
-            oscilloscopeCtx.strokeStyle = state.endoscopyActive ? '#ff0055' : 'rgba(0, 243, 255, 0.8)';
-            oscilloscopeCtx.shadowBlur = 6;
-            oscilloscopeCtx.shadowColor = state.endoscopyActive ? '#ff0055' : '#00f3ff';
+            oscilloscopeCtx.strokeStyle = themeData[state.theme].primary;
+            oscilloscopeCtx.shadowBlur = 8;
+            oscilloscopeCtx.shadowColor = themeData[state.theme].primary;
             oscilloscopeCtx.beginPath();
-            
+
             const sliceWidth = w * 1.0 / bufferLength;
             let x = 0;
             for (let i = 0; i < bufferLength; i++) {
                 const v = dataArray[i] / 128.0;
-                let y = v * h / 2;
+                const y = v * h / 2;
                 if (i === 0) oscilloscopeCtx.moveTo(x, y);
                 else oscilloscopeCtx.lineTo(x, y);
                 x += sliceWidth;
@@ -1528,25 +1025,30 @@
             oscilloscopeCtx.shadowBlur = 0;
         }
 
-        // --- Eventos de Controles ---
-        DOM.btnIngest.addEventListener('click', triggerFoodIngestion);
-        DOM.btnEndoMode.addEventListener('click', toggleEndoscopyMode);
-
-        DOM.sldPh.addEventListener('input', (e) => {
-            state.phStomach = parseFloat(e.target.value);
-            DOM.lblPhVal.textContent = state.phStomach.toFixed(1);
-            if (state.activeOrgan === 'stomach') {
-                DOM.valOrganPh.textContent = state.phStomach.toFixed(1);
-            }
-            if (stomachAcidMesh) {
-                const factor = (state.phStomach - 1.0) / 5.5;
-                stomachAcidMesh.material.color.setRGB(1.0 - factor, factor, 0.0);
-            }
+        // --- CONTROLS LISTENERS ---
+        DOM.btnCta.addEventListener('click', () => {
+            playSfx('launch');
+            logSystem('CHARTER', 'Reserva de vuelo charter de lujo iniciada.');
         });
+        DOM.btnCta.addEventListener('mouseenter', () => playSfx('hover'));
 
-        DOM.sldSpeed.addEventListener('input', (e) => {
-            state.peristalsisSpeed = parseFloat(e.target.value);
-            DOM.lblSpeedVal.textContent = `${state.peristalsisSpeed.toFixed(1)}x`;
+        // Modulators Grid Buttons
+        DOM.spectrumButtons.forEach(btn => {
+            btn.addEventListener('mouseenter', () => playSfx('hover'));
+            btn.addEventListener('click', () => {
+                DOM.spectrumButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Remove existing theme classes from body
+                document.body.classList.remove('theme-nebula', 'theme-supernova', 'theme-void');
+                
+                state.theme = btn.dataset.theme;
+                document.body.classList.add(`theme-${state.theme}`);
+
+                if (state.initialized) {
+                    updatePlanetaryTheme();
+                }
+            });
         });
     </script>
 </body>
