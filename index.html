@@ -54,7 +54,6 @@
             z-index: 2;
         }
 
-        /* --- VISOR HUD QUIRÚRGICO CIRCULAR --- */
         .hud-visor-frame {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -77,7 +76,6 @@
             transition: var(--transition-hud);
         }
 
-        /* Left Side Diagnostics HUD */
         .hud-left {
             left: 30px; top: 120px;
             width: 280px;
@@ -121,7 +119,6 @@
             font-size: 0.9rem;
         }
 
-        /* Diagnostic Bar */
         .hud-bar-group {
             display: flex;
             flex-direction: column;
@@ -140,7 +137,6 @@
             transition: width 0.5s ease;
         }
 
-        /* Right Side Controls HUD */
         .hud-right {
             right: 30px; top: 120px;
             width: 290px;
@@ -184,7 +180,6 @@
             box-shadow: 0 0 10px rgba(0, 255, 102, 0.2);
         }
 
-        /* Slider Controls */
         .hud-slider-group {
             display: flex;
             flex-direction: column;
@@ -216,7 +211,6 @@
             box-shadow: 0 0 8px var(--clr-hud-cyan);
         }
 
-        /* Cinematic Reticle in Center of the Goggles */
         .hud-center-reticle {
             position: absolute;
             top: 50%; left: 50%;
@@ -251,7 +245,6 @@
             animation: pulse-dot 1s infinite alternate;
         }
 
-        /* Dynamic Biometric 3D Labels floating in Visor */
         .bio-label-3d {
             position: absolute;
             background: rgba(0, 8, 20, 0.85);
@@ -285,7 +278,6 @@
             left: 50%; bottom: -25px;
         }
 
-        /* Top HUD Bar */
         .hud-top-bar {
             grid-column: 1 / -1;
             height: 100%;
@@ -308,7 +300,6 @@
             gap: 12px;
         }
 
-        /* Bottom Clinical Logger console */
         .hud-bottom {
             grid-column: 2;
             grid-row: 2;
@@ -342,7 +333,6 @@
         .console-line .tag { color: var(--clr-hud-cyan); }
         .console-line .txt { color: #d1f4ff; }
 
-        /* Splash Overlay Screen */
         .splash-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -406,7 +396,6 @@
             transform: scale(1.03);
         }
 
-        /* Oscilloscope mini graph */
         #oscilloscope {
             width: 100%; height: 100%;
         }
@@ -420,17 +409,11 @@
             100% { opacity: 1; }
         }
 
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-        }
-
         @keyframes fade-in-up {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Endoscopy Camera Flashing lights indicator */
         .endo-indicator {
             position: absolute;
             top: 30px; left: 50%;
@@ -474,9 +457,7 @@
     <canvas id="canvas3d"></canvas>
 
     <!-- Biometric Labels Floating in 3D Visor -->
-    <div id="bioLabelsContainer" style="position:absolute; width:100%; height:100%; top:0; left:0; pointer-events:none; z-index: 12;">
-        <!-- Dynamically injected label markers -->
-    </div>
+    <div id="bioLabelsContainer" style="position:absolute; width:100%; height:100%; top:0; left:0; pointer-events:none; z-index: 12;"></div>
 
     <!-- ENDOSCOPY ACTIVE WARNING INDICATOR -->
     <div class="endo-indicator" id="endoIndicator">
@@ -496,7 +477,6 @@
     <!-- GLOBAL GOGGLES HUD OVERLAYS -->
     <div class="ui-overlay">
         
-        <!-- TOP HUD STATUS -->
         <header class="hud-top-bar ui-panel-interactive">
             <div class="hud-top-title">
                 <span class="pulse-light"></span>
@@ -601,26 +581,25 @@
 
             <div class="hud-header">Biosonido de Fluido</div>
             
-            <div class="visualizer-area" style="height: 90px;">
+            <div class="visualizer-area" style="height: 90px; border: 1px solid rgba(0, 243, 255, 0.1); background: rgba(0,0,0,0.5);">
                 <canvas id="oscilloscope"></canvas>
             </div>
         </div>
 
     </div>
 
-    <!-- Goggles Reticle (Visual Only) -->
     <div class="hud-center-reticle"></div>
 
-    <!-- WebGL Libraries -->
+    <!-- WebGL Libraries (CDNs estables) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // --- Dynamic Clinical State ---
+        // --- Estado General ---
         const state = {
             initialized: false,
             activeOrgan: 'esophagus',
-            endoscopyActive: false, // 1st person endoscopic camera mode
+            endoscopyActive: false,
             phStomach: 1.8,
             peristalsisSpeed: 1.0,
             volume: 0.6,
@@ -638,17 +617,17 @@
                 absorption: 0,
                 peristalsis: 95,
                 pos3d: new THREE.Vector3(0, 1.8, 0),
-                log: 'Esófago despejado. Movimiento peristáltico óptimo detectado.'
+                log: 'Esófago despejado. Movimiento peristáltico óptimo.'
             },
             stomach: {
                 name: 'Estómago',
-                ph: '1.8', // Dynamic
+                ph: '1.8',
                 enzyme: 'Pepsina & HCl',
                 chemical: 68,
                 absorption: 5,
                 peristalsis: 60,
                 pos3d: new THREE.Vector3(-0.4, 0.4, 0),
-                log: 'Ácido Clorhídrico activo. Licuación del bolo y desnaturalización de proteínas en progreso.'
+                log: 'Ácido Clorhídrico activo. Desnaturalización de proteínas en progreso.'
             },
             small_int: {
                 name: 'Intestino Delgado',
@@ -658,7 +637,7 @@
                 absorption: 88,
                 peristalsis: 45,
                 pos3d: new THREE.Vector3(0, -1.0, 0),
-                log: 'Nutrientes ingresando al intestino delgado. Absorción por microvellosidades intestinales iniciada.'
+                log: 'Nutrientes ingresando al intestino delgado. Absorción celular activa.'
             },
             large_int: {
                 name: 'Intestino Grueso',
@@ -668,23 +647,20 @@
                 absorption: 98,
                 peristalsis: 20,
                 pos3d: new THREE.Vector3(0.5, -0.6, 0.3),
-                log: 'Reabsorción de electrolitos y agua en el colon. Solidificación de quimo a materia fecal.'
+                log: 'Reabsorción de agua en el colon. Solidificación del quimo.'
             }
         };
 
-        // --- Three.js anatomical meshes ---
+        // --- Variables Gráficas ---
         let scene, camera, renderer, controls;
         let esophagusTube, stomachMesh, stomachAcidMesh, smallIntestineTube, largeIntestineTube;
-        let liverMesh, gallbladderMesh, pancreasMesh;
-        let ambientDust;
-        let bolusMesh, absorptionParticles;
-        let endoscopyCurve;
+        let liverMesh, ambientDust, bolusMesh, absorptionParticles;
+        let endoscopyCurve, pathCurve;
         let biometricLabels = [];
 
-        // --- Web Audio Synthesizer ---
-        let audioCtx, masterGainNode, analyser;
-        let stomachAcidSizzleGain, bodyFluidOsc, bodyFluidGain;
-        let endoEchoGain, heartbeatOsc, heartbeatGain;
+        // --- Variables de Sonido ---
+        let audioCtx = null, masterGainNode = null, analyser = null;
+        let stomachAcidSizzleGain = null, bodyFluidGain = null, heartbeatGain = null;
         let oscilloscopeCanvas, oscilloscopeCtx;
 
         const DOM = {
@@ -723,106 +699,133 @@
             }
         }
 
-        // Clock Update
-        setInterval(() => {
-            const now = new Date();
-            const ms = String(now.getMilliseconds()).padStart(3, '0');
-            DOM.clock.textContent = `${now.toLocaleTimeString()}.${ms}`;
-        }, 33);
+        // ==========================================================================
+        // 1. CARGADOR DE LIBRERÍAS ASÍNCRONO (EVITA ERRORES EN CODEPEN)
+        // ==========================================================================
+        DOM.initializeBtn.addEventListener('click', () => {
+            // Comprobador de descargas
+            if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') {
+                DOM.initializeBtn.textContent = "CARGANDO BIOSISTEMAS...";
+                DOM.initializeBtn.style.borderColor = "#ff0055";
+                DOM.initializeBtn.style.color = "#ff0055";
+                
+                // Reintentar en bucle cada 150ms automáticamente
+                const checkInterval = setInterval(() => {
+                    if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined') {
+                        clearInterval(checkInterval);
+                        launchVisorSystems();
+                    }
+                }, 150);
+            } else {
+                launchVisorSystems();
+            }
+        });
+
+        function launchVisorSystems() {
+            // Intentar inicializar el sonido (si el iframe de CodePen lo bloquea, el programa no fallará)
+            try {
+                initAudio();
+            } catch(e) {
+                console.warn("AudioContext bloqueado o no soportado por el navegador/iframe.");
+            }
+
+            // Inicializar el espacio 3D (Siempre cargará independientemente del audio)
+            initThree();
+            
+            DOM.splash.classList.add('hidden');
+            state.initialized = true;
+            logClinical('VISOR', 'Casco Goggles acoplado. Telemetría lista.');
+            
+            // Iniciar osciloscopio 2D
+            if (analyser) {
+                drawOscilloscope();
+            }
+            playSfx('deglution');
+        }
 
         // ==========================================================================
-        // 1. BIOSOUND AUDIO ENGINE SYNTHESIS
+        // 2. SÍNTESIS DE AUDIO BIOQUÍMICA PROCEDURAL (SEGURO CONTRA ERRORES)
         // ==========================================================================
         function initAudio() {
-            try {
-                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioCtxClass();
-                masterGainNode = audioCtx.createGain();
-                masterGainNode.gain.setValueAtTime(state.volume * 0.22, audioCtx.currentTime);
+            const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtxClass) return;
+            
+            audioCtx = new AudioCtxClass();
+            masterGainNode = audioCtx.createGain();
+            masterGainNode.gain.setValueAtTime(state.volume * 0.22, audioCtx.currentTime);
 
-                analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 512;
-                masterGainNode.connect(analyser);
-                analyser.connect(audioCtx.destination);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 512;
+            masterGainNode.connect(analyser);
+            analyser.connect(audioCtx.destination);
 
-                // Body Fluid continuous breathing hum
-                const noiseSize = audioCtx.sampleRate * 2.5;
-                const noiseBuffer = audioCtx.createBuffer(1, noiseSize, audioCtx.sampleRate);
-                const noiseOutput = noiseBuffer.getChannelData(0);
-                for (let i = 0; i < noiseSize; i++) {
-                    noiseOutput[i] = Math.random() * 2 - 1;
-                }
-
-                const noiseSrc = audioCtx.createBufferSource();
-                noiseSrc.buffer = noiseBuffer;
-                noiseSrc.loop = true;
-
-                const noiseFilter = audioCtx.createBiquadFilter();
-                noiseFilter.type = 'lowpass';
-                noiseFilter.frequency.setValueAtTime(80, audioCtx.currentTime);
-
-                const fluidLfo = audioCtx.createOscillator();
-                fluidLfo.type = 'sine';
-                fluidLfo.frequency.setValueAtTime(0.1, audioCtx.currentTime); // slow breathing LFO
-
-                const fluidLfoGain = audioCtx.createGain();
-                fluidLfoGain.gain.setValueAtTime(35, audioCtx.currentTime);
-
-                fluidLfo.connect(fluidLfoGain);
-                fluidLfoGain.connect(noiseFilter.frequency);
-                noiseSrc.connect(noiseFilter);
-
-                bodyFluidGain = audioCtx.createGain();
-                bodyFluidGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                noiseFilter.connect(bodyFluidGain);
-                bodyFluidGain.connect(masterGainNode);
-
-                noiseSrc.start();
-                fluidLfo.start();
-
-                // Stomach chemical acid sizzling bandpass noise
-                const acidNoise = audioCtx.createBufferSource();
-                acidNoise.buffer = noiseBuffer;
-                acidNoise.loop = true;
-
-                const acidFilter = audioCtx.createBiquadFilter();
-                acidFilter.type = 'bandpass';
-                acidFilter.frequency.setValueAtTime(2900, audioCtx.currentTime);
-                acidFilter.Q.setValueAtTime(2.0, audioCtx.currentTime);
-
-                stomachAcidSizzleGain = audioCtx.createGain();
-                stomachAcidSizzleGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-
-                acidNoise.connect(acidFilter);
-                acidFilter.connect(stomachAcidSizzleGain);
-                stomachAcidSizzleGain.connect(masterGainNode);
-                acidNoise.start();
-
-                // Heartbeat slow pulse synthesizer
-                heartbeatGain = audioCtx.createGain();
-                heartbeatGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                heartbeatGain.connect(masterGainNode);
-
-                // Start rhythmic organic heart beat loop
-                setInterval(() => {
-                    if (!audioCtx) return;
-                    playHeartBeat();
-                }, 1000);
-
-                oscilloscopeCanvas = document.getElementById('oscilloscope');
-                oscilloscopeCtx = oscilloscopeCanvas.getContext('2d');
-                resizeOscilloscope();
-                window.addEventListener('resize', resizeOscilloscope);
-            } catch(e) {
-                console.error(e);
+            // Ruido de fondo para fluidos estomacales
+            const noiseSize = audioCtx.sampleRate * 2.5;
+            const noiseBuffer = audioCtx.createBuffer(1, noiseSize, audioCtx.sampleRate);
+            const noiseOutput = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseSize; i++) {
+                noiseOutput[i] = Math.random() * 2 - 1;
             }
+
+            const noiseSrc = audioCtx.createBufferSource();
+            noiseSrc.buffer = noiseBuffer;
+            noiseSrc.loop = true;
+
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'lowpass';
+            noiseFilter.frequency.setValueAtTime(80, audioCtx.currentTime);
+
+            const fluidLfo = audioCtx.createOscillator();
+            fluidLfo.type = 'sine';
+            fluidLfo.frequency.setValueAtTime(0.1, audioCtx.currentTime);
+
+            const fluidLfoGain = audioCtx.createGain();
+            fluidLfoGain.gain.setValueAtTime(35, audioCtx.currentTime);
+
+            fluidLfo.connect(fluidLfoGain);
+            fluidLfoGain.connect(noiseFilter.frequency);
+            noiseSrc.connect(noiseFilter);
+
+            bodyFluidGain = audioCtx.createGain();
+            bodyFluidGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            noiseFilter.connect(bodyFluidGain);
+            bodyFluidGain.connect(masterGainNode);
+
+            noiseSrc.start();
+            fluidLfo.start();
+
+            // Siseo de ácido
+            const acidNoise = audioCtx.createBufferSource();
+            acidNoise.buffer = noiseBuffer;
+            acidNoise.loop = true;
+
+            const acidFilter = audioCtx.createBiquadFilter();
+            acidFilter.type = 'bandpass';
+            acidFilter.frequency.setValueAtTime(2900, audioCtx.currentTime);
+            acidFilter.Q.setValueAtTime(2.0, audioCtx.currentTime);
+
+            stomachAcidSizzleGain = audioCtx.createGain();
+            stomachAcidSizzleGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+
+            acidNoise.connect(acidFilter);
+            acidFilter.connect(stomachAcidSizzleGain);
+            stomachAcidSizzleGain.connect(masterGainNode);
+            acidNoise.start();
+
+            // Latidos
+            heartbeatGain = audioCtx.createGain();
+            heartbeatGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            heartbeatGain.connect(masterGainNode);
+
+            setInterval(() => {
+                if (audioCtx) playHeartBeat();
+            }, 1000);
         }
 
         function playHeartBeat() {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
             
-            // Double beat: lub-dub
             const beat = (timeOffset, pitch, vol) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -841,7 +844,7 @@
             };
 
             const isEndo = state.endoscopyActive;
-            const volumeCoeff = isEndo ? 0.8 : 0.25; // heartbeat is much louder and deeper inside!
+            const volumeCoeff = isEndo ? 0.8 : 0.25;
             
             beat(0, 50, volumeCoeff);
             beat(0.18, 48, volumeCoeff * 0.7);
@@ -889,77 +892,27 @@
             }
         }
 
-        // Adjust sound parameters when switching modes
         function adjustEndoscopicAudioFilter(active) {
-            if (!audioCtx) return;
+            if (!audioCtx || !bodyFluidGain) return;
             const t = audioCtx.currentTime;
-            
-            // Cut high frequencies inside, make hum deeper
             if (active) {
                 bodyFluidGain.gain.setTargetAtTime(0.85, t, 0.2);
-                logClinical('AUDIO', 'Acústica modificada: Resonancia de cavidad interna activa.');
             } else {
                 bodyFluidGain.gain.setTargetAtTime(0.5, t, 0.2);
             }
         }
 
         // ==========================================================================
-        // 2. ULTRA-REALISTIC 3D ORGANS ENGINE (THREE.JS PBR)
+        // 3. DISEÑO DE ÓRGANOS 3D PBR (MÁXIMO REALISMO TISULAR)
         // ==========================================================================
-        function initThree() {
-            const container = document.getElementById('canvas3d');
-            scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2('#010408', 0.05);
-
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 100);
-            camera.position.set(0, 0.5, 7.8);
-
-            renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.maxDistance = 14;
-            controls.minDistance = 2.5;
-
-            // Highly realistic organic lights
-            const lightsGroup = new THREE.Group();
-            
-            const sunlight = new THREE.DirectionalLight('#ffffff', 1.8);
-            sunlight.position.set(5, 8, 5);
-            lightsGroup.add(sunlight);
-            
-            const fillLight = new THREE.DirectionalLight('#ff99bb', 0.7); // fleshy organic pink fill light
-            fillLight.position.set(-5, 2, -3);
-            lightsGroup.add(fillLight);
-            
-            const internalGlow = new THREE.PointLight('#00f3ff', 0.8, 12);
-            internalGlow.position.set(0, 0, 0);
-            lightsGroup.add(internalGlow);
-            
-            scene.add(lightsGroup);
-
-            // Build realistic organs
-            buildRealisticOrgans3D();
-            buildAnatomicalBiometricLabels();
-            buildEnvironmentBloodCells();
-
-            window.addEventListener('resize', onWindowResize);
-        }
-
-        // Generate procedural vascular biological texture using HTML Canvas!
-        function generateVascularTexture(baseColorHex, isRough) {
+        function generateVascularTexture(baseColorHex) {
             const canvas = document.createElement('canvas');
             canvas.width = 256; canvas.height = 256;
             const ctx = canvas.getContext('2d');
             
-            // Fleshy base
             ctx.fillStyle = baseColorHex;
             ctx.fillRect(0, 0, 256, 256);
             
-            // Draw cellular capillaries/blood vessels
             ctx.strokeStyle = '#8b1e3f';
             ctx.lineWidth = 1;
             for (let i = 0; i < 15; i++) {
@@ -975,7 +928,6 @@
                 ctx.stroke();
             }
             
-            // Add noise shading
             for(let i=0; i<1200; i++) {
                 const rx = Math.random() * 256;
                 const ry = Math.random() * 256;
@@ -990,67 +942,108 @@
             return tex;
         }
 
+        function getCircleTexture(colorStr = '#ffffff') {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32; canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.3, colorStr);
+            grad.addColorStop(0.8, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0,0, 32,32);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function initThree() {
+            const container = document.getElementById('canvas3d');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2('#010408', 0.045);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 100);
+            camera.position.set(0, 0.5, 7.8);
+
+            renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 14;
+            controls.minDistance = 2.5;
+
+            const sunlight = new THREE.DirectionalLight('#ffffff', 1.8);
+            sunlight.position.set(5, 8, 5);
+            scene.add(sunlight);
+            
+            const fillLight = new THREE.DirectionalLight('#ff99bb', 0.7);
+            fillLight.position.set(-5, 2, -3);
+            scene.add(fillLight);
+            
+            const ambientLight = new THREE.AmbientLight('#081528', 0.9);
+            scene.add(ambientLight);
+
+            buildRealisticOrgans3D();
+            buildAnatomicalBiometricLabels();
+            buildEnvironmentBloodCells();
+
+            renderer.setAnimationLoop(renderLoop);
+        }
+
         function buildRealisticOrgans3D() {
-            // Shared PBR Flesh Material parameters
             const esophagusMat = new THREE.MeshStandardMaterial({
-                color: '#d16278', // reddish pink
-                map: generateVascularTexture('#d16278', false),
-                roughness: 0.15,  // very wet
+                color: '#d16278',
+                map: generateVascularTexture('#d16278'),
+                roughness: 0.15,
                 metalness: 0.1,
                 side: THREE.DoubleSide
             });
 
             const stomachMat = new THREE.MeshStandardMaterial({
                 color: '#de5b73',
-                map: generateVascularTexture('#de5b73', false),
-                roughness: 0.1,   // ultra glossy stomach lining
+                map: generateVascularTexture('#de5b73'),
+                roughness: 0.1,
                 metalness: 0.05,
                 side: THREE.DoubleSide
             });
 
             const smallIntMat = new THREE.MeshStandardMaterial({
                 color: '#e0798e',
-                map: generateVascularTexture('#e0798e', false),
+                map: generateVascularTexture('#e0798e'),
                 roughness: 0.22,
                 metalness: 0.08
             });
 
             const largeIntMat = new THREE.MeshStandardMaterial({
-                color: '#c2858b', // segmented colon tone
-                map: generateVascularTexture('#c2858b', true),
+                color: '#c2858b',
+                map: generateVascularTexture('#c2858b'),
                 roughness: 0.3,
                 metalness: 0.1
             });
 
-            // 1. ESOPHAGUS (Realistic hollow tube)
+            // 1. Esófago
             const esophagusPath = new THREE.CatmullRomCurve3([
                 new THREE.Vector3(0, 3.8, 0),
                 new THREE.Vector3(0, 2.5, -0.05),
                 new THREE.Vector3(-0.05, 1.4, -0.1)
             ]);
-            // Hollow tube (double sided geometry)
             esophagusTube = new THREE.Mesh(
                 new THREE.TubeGeometry(esophagusPath, 32, 0.14, 12, false),
                 esophagusMat
             );
             scene.add(esophagusTube);
 
-            // 2. STOMACH WITH ANATOMICAL RUGAE (Realistic curves)
+            // 2. Estómago
             const stomachGeom = new THREE.SphereGeometry(0.72, 48, 48);
             const pos = stomachGeom.attributes.position;
-            // Deform mathematical sphere to produce a realistic J-shape stomach
             for (let i = 0; i < pos.count; i++) {
                 const x = pos.getX(i);
                 const y = pos.getY(i);
                 const z = pos.getZ(i);
-                
-                // Real kidney curvature deformation
                 const bend = Math.sin(y * 1.8) * 0.45;
-                const bulge = 1.3 - y * 0.25; // wider at top bottom cardias pylorus
-                
-                // Procedural wrinkled stomach folds (rugae wrinkles)
+                const bulge = 1.3 - y * 0.25;
                 const wrinkle = Math.sin(x * 12) * Math.cos(z * 12) * 0.035;
-
                 pos.setX(i, x * 1.5 * bulge + bend + wrinkle);
                 pos.setY(i, y * 0.9 + wrinkle);
                 pos.setZ(i, z * 0.95 * bulge - (x * 0.15) + wrinkle);
@@ -1062,12 +1055,12 @@
             stomachMesh.rotation.z = -Math.PI / 10;
             scene.add(stomachMesh);
 
-            // Glowing bioluminescent stomach acid pool inside stomach
+            // Ácido estomacal
             const acidGeom = new THREE.SphereGeometry(0.48, 24, 24);
             const acidPos = acidGeom.attributes.position;
             for (let i = 0; i < acidPos.count; i++) {
                 acidPos.setX(i, acidPos.getX(i) * 1.3);
-                acidPos.setY(i, acidPos.getY(i) * 0.45 - 0.2); // flat pool
+                acidPos.setY(i, acidPos.getY(i) * 0.45 - 0.2);
             }
             acidGeom.computeVertexNormals();
             stomachAcidMesh = new THREE.Mesh(
@@ -1084,15 +1077,13 @@
             stomachAcidMesh.position.set(-0.4, 0.48, -0.05);
             scene.add(stomachAcidMesh);
 
-            // 3. AUXILIARY REALISTIC LIVER (Large reddish lobe)
+            // 3. Hígado realista de soporte
             const liverGeom = new THREE.SphereGeometry(0.85, 32, 32);
             const liverPos = liverGeom.attributes.position;
             for (let i = 0; i < liverPos.count; i++) {
                 const x = liverPos.getX(i);
                 const y = liverPos.getY(i);
                 const z = liverPos.getZ(i);
-                
-                // Wedge deformation
                 liverPos.setX(i, x * 1.8 + y * 0.4);
                 liverPos.setY(i, y * 0.8 - x * 0.2);
                 liverPos.setZ(i, z * 0.8 + x * 0.3);
@@ -1109,13 +1100,12 @@
             liverMesh.position.set(0.68, 0.82, -0.2);
             scene.add(liverMesh);
 
-            // 4. SMALL INTESTINE (Dense sinuous path)
+            // 4. Intestino Delgado
             const smallIntPoints = [];
             const segments = 550;
             for (let i = 0; i <= segments; i++) {
-                const t = (i / segments) * Math.PI * 22; // tight loops
-                const r = 0.52 + Math.sin(t * 2.2) * 0.16; // sinuous variations
-                
+                const t = (i / segments) * Math.PI * 22;
+                const r = 0.52 + Math.sin(t * 2.2) * 0.16;
                 const x = Math.sin(t) * r;
                 const y = -0.32 - (i / segments) * 1.4 + Math.cos(t * 4.0) * 0.05;
                 const z = Math.cos(t) * r;
@@ -1128,33 +1118,24 @@
             );
             scene.add(smallIntestineTube);
 
-            // 5. LARGE INTESTINE (Segmented Haustra structure)
+            // 5. Intestino Grueso (Segmentado con Haustras orgánicas)
             const largeIntPoints = [
                 new THREE.Vector3(0.55, -1.8, 0.1),
                 new THREE.Vector3(0.7, -1.8, 0.1),
-                new THREE.Vector3(0.75, -0.1, 0.1),  // Ascending
-                new THREE.Vector3(-0.75, -0.1, 0.1), // Transverse
-                new THREE.Vector3(-0.8, -1.9, 0.1),  // Descending
-                new THREE.Vector3(-0.15, -2.0, 0.1), // Sigmoid
-                new THREE.Vector3(-0.15, -2.6, 0.1)  // Rectum
+                new THREE.Vector3(0.75, -0.1, 0.1),
+                new THREE.Vector3(-0.75, -0.1, 0.1),
+                new THREE.Vector3(-0.8, -1.9, 0.1),
+                new THREE.Vector3(-0.15, -2.0, 0.1),
+                new THREE.Vector3(-0.15, -2.6, 0.1)
             ];
             const largeIntPath = new THREE.CatmullRomCurve3(largeIntPoints);
-            
-            // To make segmented haustra sacs, we custom extrude along path with varying radius sizes using a sine function
             const largeIntGeom = new THREE.TubeGeometry(largeIntPath, 90, 0.18, 12, false);
             const largeIntPos = largeIntGeom.attributes.position;
-            // Modulate vertices distance to center of the tube along segments
             for (let i = 0; i < largeIntPos.count; i++) {
                 const x = largeIntPos.getX(i);
-                const y = largeIntPos.getY(i);
                 const z = largeIntPos.getZ(i);
-                
-                // Find out where in the segment loop we are to add sine wave bumps
-                const segmentIndex = Math.floor(i / 14); // 14 vertices per ring
-                const haustraFactor = 1.0 + Math.sin(segmentIndex * 1.4) * 0.18; // segmented haustra pouches!
-                
-                // Move vertex slightly relative to the tube center line
-                // This rough calculation works beautifully for procedural organic haustra!
+                const segmentIndex = Math.floor(i / 14);
+                const haustraFactor = 1.0 + Math.sin(segmentIndex * 1.4) * 0.18;
                 largeIntPos.setX(i, x * haustraFactor);
                 largeIntPos.setZ(i, z * haustraFactor);
             }
@@ -1163,13 +1144,11 @@
             largeIntestineTube = new THREE.Mesh(largeIntGeom, largeIntMat);
             scene.add(largeIntestineTube);
 
-            // --- ENDOSCOPIC TRAVEL PATH GENERATION ---
-            // Precise interior path inside esophagus and into stomach chamber for endoscopy camera
+            // Ruta de Endoscopia (cámara en primera persona)
             const endoPoints = [
                 new THREE.Vector3(0, 3.8, 0),
                 new THREE.Vector3(0, 2.5, -0.05),
                 new THREE.Vector3(-0.02, 1.6, -0.08),
-                // Sliding inside stomach chamber
                 new THREE.Vector3(-0.25, 0.9, -0.05),
                 new THREE.Vector3(-0.4, 0.65, -0.03),
                 new THREE.Vector3(-0.45, 0.45, -0.03),
@@ -1177,7 +1156,7 @@
             ];
             endoscopyCurve = new THREE.CatmullRomCurve3(endoPoints);
 
-            // 6. GLOWING NUTRIENT BOLUS
+            // Bolo alimenticio
             const bolusGeom = new THREE.SphereGeometry(0.12, 16, 16);
             bolusMesh = new THREE.Mesh(
                 bolusGeom,
@@ -1192,7 +1171,7 @@
             bolusMesh.material.transparent = true;
             scene.add(bolusMesh);
 
-            // Absorption microparticles
+            // Partículas de absorción
             const absCount = 200;
             const absGeom = new THREE.BufferGeometry();
             const absPos = new Float32Array(absCount * 3);
@@ -1220,9 +1199,25 @@
             );
             absorptionParticles.userData = { speedList: absSpeed };
             scene.add(absorptionParticles);
+
+            // Generación de ruta global del bolo
+            const pathPoints = [
+                new THREE.Vector3(0, 3.8, 0),
+                new THREE.Vector3(0, 2.5, -0.05),
+                new THREE.Vector3(-0.05, 1.4, -0.1),
+                new THREE.Vector3(-0.4, 0.9, -0.05),
+                new THREE.Vector3(-0.45, 0.45, -0.03),
+                new THREE.Vector3(-0.2, 0.28, -0.08),
+                ...smallIntPoints,
+                new THREE.Vector3(0.55, -1.8, 0.1),
+                new THREE.Vector3(0.75, -0.1, 0.1),
+                new THREE.Vector3(-0.75, -0.1, 0.1),
+                new THREE.Vector3(-0.8, -1.9, 0.1),
+                new THREE.Vector3(-0.15, -2.6, 0.1)
+            ];
+            pathCurve = new THREE.CatmullRomCurve3(pathPoints);
         }
 
-        // Floating blood cells in background
         function buildEnvironmentBloodCells() {
             const count = 180;
             const geom = new THREE.BufferGeometry();
@@ -1237,7 +1232,7 @@
                 geom,
                 new THREE.PointsMaterial({
                     size: 0.08,
-                    map: getCircleTexture('#ff3c00'), // red blood cells glow
+                    map: getCircleTexture('#ff3c00'),
                     transparent: true,
                     opacity: 0.25,
                     blending: THREE.AdditiveBlending,
@@ -1247,31 +1242,21 @@
             scene.add(ambientDust);
         }
 
-        // ==========================================================================
-        // 3. BIOMETRIC FLOATING LABELS (VISOR AR ACTION)
-        // ==========================================================================
+        // Labels flotantes
         function buildAnatomicalBiometricLabels() {
-            // Delete existing
             DOM.bioLabelsContainer.innerHTML = '';
             biometricLabels = [];
 
-            // Add labels to follow each organ in 3D
             const addLabel = (key, text) => {
                 const badge = document.createElement('div');
                 badge.className = 'bio-label-3d';
                 badge.innerHTML = `${text}<span class="line-connector"></span>`;
                 badge.dataset.organ = key;
                 
-                badge.addEventListener('mouseenter', () => { if(audioCtx) playSfx('hover'); });
-                badge.addEventListener('click', () => {
-                    setHighlightedOrgan(key);
-                });
+                badge.addEventListener('click', () => setHighlightedOrgan(key));
 
                 DOM.bioLabelsContainer.appendChild(badge);
-                biometricLabels.push({
-                    element: badge,
-                    organKey: key
-                });
+                biometricLabels.push({ element: badge, organKey: key });
             };
 
             addLabel('esophagus', 'ESÓFAGO');
@@ -1280,38 +1265,29 @@
             addLabel('large_int', 'INTESTINO GRUESO');
         }
 
-        // Projects 3D vectors to 2D Screen pixel coordinates to float labels reactively
         function updateBiometricLabelsPositions() {
             if (!scene || !camera) return;
             
             biometricLabels.forEach(label => {
                 const organKey = label.organKey;
                 const spec = organSpecs[organKey];
-                
-                // Copy 3D position of organ
                 const pos = spec.pos3d.clone();
-                
-                // Project 3D vector to screen space
                 pos.project(camera);
                 
-                // Convert normalized vector [-1, 1] to pixel values
                 const x = (pos.x * .5 + .5) * window.innerWidth;
                 const y = (-(pos.y * .5) + .5) * window.innerHeight;
                 
-                // Apply absolute positioning style to floating badge
                 label.element.style.left = `${x}px`;
                 label.element.style.top = `${y - 20}px`;
                 
-                // Fade out labels if endoscopy camera goes too close inside!
                 if (state.endoscopyActive) {
                     label.element.style.opacity = '0';
                     label.element.style.pointerEvents = 'none';
                 } else {
-                    label.element.style.opacity = pos.z > 1 ? '0' : '1'; // hide if behind camera
+                    label.element.style.opacity = pos.z > 1 ? '0' : '1';
                     label.element.style.pointerEvents = 'auto';
                 }
 
-                // Active styling toggle
                 if (state.activeOrgan === organKey) {
                     label.element.classList.add('active');
                 } else {
@@ -1320,7 +1296,6 @@
             });
         }
 
-        // Ingest Apple
         function triggerFoodIngestion() {
             if (state.foodInTransit) return;
             state.foodInTransit = true;
@@ -1331,44 +1306,36 @@
             logClinical('INGESTA', 'Bolo digestivo ingresando a esófago.');
         }
 
-        // ==========================================================================
-        // 4. MODO ENDOSCOPIA 1ª PERSONA (IMERSIVE ENGINE)
-        // ==========================================================================
         function toggleEndoscopyMode() {
             state.endoscopyActive = !state.endoscopyActive;
             
             if (state.endoscopyActive) {
-                // Prepare Endoscopy
                 DOM.btnEndoMode.textContent = '🎥 Salir de Endoscopia';
                 DOM.btnEndoMode.classList.add('active');
                 DOM.endoIndicator.classList.add('active');
-                
-                // Lock Orbit controls to let camera guide the tour
                 controls.enabled = false;
-                
-                logClinical('ENDO', 'Microcámara activada. Iniciando descenso por esófago.', true);
+                logClinical('ENDO', 'Cámara interna iniciada. Bajando por esófago.', true);
                 adjustEndoscopicAudioFilter(true);
             } else {
-                // Exit Endoscopy
-                DOM.btnEndoMode.textContent = '🎥 Iniciar Endoscopia 1ª Persona';
+                DOM.btnEndoMode.textContent = '🎥 Iniciar Endoscopia';
                 DOM.btnEndoMode.classList.remove('active');
                 DOM.endoIndicator.classList.remove('active');
                 
-                // Restore standard Orbit controls
                 controls.enabled = true;
                 camera.position.set(0, 0.5, 7.8);
                 controls.target.set(0, 0, 0);
                 
-                logClinical('SYSTEM', 'Microcámara retraída. Retornando a vista giroscópica.');
+                logClinical('SYSTEM', 'Vista giroscópica restaurada.');
                 adjustEndoscopicAudioFilter(false);
             }
         }
 
-        // 3D Rendering & Animation Loop
+        // ==========================================================================
+        // 4. ANIMACIÓN Y RENDER LOOP (PROTECCIÓN CONTRA CRASHES)
+        // ==========================================================================
         function renderLoop(time) {
             const elapsed = time * 0.001;
             
-            // Peristalsis muscle contractions wave simulation in 3D scene
             state.timeScale += 0.015 * state.peristalsisSpeed;
             const wave = Math.sin(state.timeScale * 3.5) * 0.02;
 
@@ -1377,85 +1344,87 @@
                 smallIntestineTube.scale.set(1.0 + wave * 0.7, 1.0, 1.0 + wave * 0.7);
             }
 
-            // Animate stomach breathing acid swirling
             if (stomachAcidMesh) {
                 stomachAcidMesh.rotation.y = elapsed * 0.4;
                 stomachAcidMesh.rotation.x = Math.sin(elapsed) * 0.05;
             }
 
-            // Endoscopy flight path or Orbit navigation update
-            if (state.endoscopyActive) {
-                // Camera flies along the endoscopyCurve path continuously based on time
-                const cameraProgress = (Math.sin(elapsed * 0.15 - Math.PI/2) * 0.5 + 0.5); // Ping-pong travel path
-                
+            if (ambientDust) {
+                ambientDust.rotation.y = elapsed * 0.02;
+            }
+
+            if (state.endoscopyActive && endoscopyCurve) {
+                const cameraProgress = (Math.sin(elapsed * 0.15 - Math.PI/2) * 0.5 + 0.5);
                 const camPos = endoscopyCurve.getPointAt(cameraProgress);
                 camera.position.copy(camPos);
                 
-                // Look slightly ahead on path to represent organic endoscopy camera look
                 const lookTarget = endoscopyCurve.getPointAt(Math.min(1.0, cameraProgress + 0.03));
                 camera.lookAt(lookTarget);
                 
-                // Dynamically update active organ in telemetry HUD during camera transit!
                 if (cameraProgress < 0.35) {
                     if (state.activeOrgan !== 'esophagus') setHighlightedOrgan('esophagus');
                 } else {
                     if (state.activeOrgan !== 'stomach') setHighlightedOrgan('stomach');
-                    // Increase acid sound intensity as camera gets closer inside acid pool!
-                    const sizzleDistCoeff = 1.0 - Math.min(1.0, Math.abs(cameraProgress - 0.7) * 3);
-                    const finalSizzle = sizzleDistCoeff * state.volume * 0.3;
-                    stomachAcidSizzleGain.gain.setTargetAtTime(finalSizzle, audioCtx.currentTime, 0.1);
+                    
+                    // Siseo dinámico de ácido según profundidad de la cámara (Verificado contra fallas)
+                    if (stomachAcidSizzleGain && audioCtx) {
+                        const sizzleDistCoeff = 1.0 - Math.min(1.0, Math.abs(cameraProgress - 0.7) * 3);
+                        const finalSizzle = sizzleDistCoeff * state.volume * 0.3;
+                        stomachAcidSizzleGain.gain.setTargetAtTime(finalSizzle, audioCtx.currentTime, 0.1);
+                    }
                 }
             } else {
-                controls.update();
-                stomachAcidSizzleGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                if (controls) controls.update();
+                if (stomachAcidSizzleGain && audioCtx) {
+                    stomachAcidSizzleGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                }
             }
 
-            // Project 3D labels to Visor Screen
             updateBiometricLabelsPositions();
 
-            // Bolus Particle Travel along full digestive tract
-            if (state.foodInTransit) {
+            // Tránsito del bolo
+            if (state.foodInTransit && pathCurve) {
                 state.bolusProgress += 0.0016 * state.peristalsisSpeed;
                 
                 if (state.bolusProgress >= 1.0) {
                     state.foodInTransit = false;
                     bolusMesh.material.opacity = 0;
-                    logClinical('GASTRO', 'Tránsito digestivo finalizado con éxito.');
+                    logClinical('GASTRO', 'Tránsito digestivo finalizado.');
                 } else {
                     const currentPos = pathCurve.getPointAt(state.bolusProgress);
                     bolusMesh.position.copy(currentPos);
                     
-                    // Trigger dynamic organic phases
                     const p = state.bolusProgress;
                     if (p < 0.08) {
-                        bolusMesh.material.color.setHex(0x00f3ff); // Salival Amilasa
+                        bolusMesh.material.color.setHex(0x00f3ff);
                         if (state.activeOrgan !== 'esophagus') setHighlightedOrgan('esophagus');
                     }
                     else if (p >= 0.08 && p < 0.25) {
-                        bolusMesh.material.color.setHex(0xff0055); // Chemical breakdown (red acid)
+                        bolusMesh.material.color.setHex(0xff0055);
                         if (state.activeOrgan !== 'stomach') {
                             setHighlightedOrgan('stomach');
-                            logClinical('CHEMICAL', 'Bolo cayendo en estómago. Siseo clorhídrico activo.');
+                            logClinical('CHEMICAL', 'Bolo en estómago. Licuación ácida activa.');
                         }
                         
-                        // Stomach acid dissolving scale
                         const dissolveScale = 1.0 - ((p - 0.08) * 1.5);
                         bolusMesh.scale.set(dissolveScale, dissolveScale, dissolveScale);
                         
-                        // Sizzle sound
-                        stomachAcidSizzleGain.gain.setTargetAtTime(state.volume * 0.15, audioCtx.currentTime, 0.1);
+                        if (stomachAcidSizzleGain && audioCtx) {
+                            stomachAcidSizzleGain.gain.setTargetAtTime(state.volume * 0.15, audioCtx.currentTime, 0.1);
+                        }
                     }
                     else if (p >= 0.25 && p < 0.72) {
                         bolusMesh.material.color.setHex(0x00ff66);
-                        stomachAcidSizzleGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.1);
+                        if (stomachAcidSizzleGain && audioCtx) {
+                            stomachAcidSizzleGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.1);
+                        }
                         
                         if (state.activeOrgan !== 'small_int') {
                             setHighlightedOrgan('small_int');
-                            logClinical('ABSORB', 'Bolo disuelto ingresa al Intestino Delgado. Absorción celular activa.');
+                            logClinical('ABSORB', 'Bolo entra al Intestino Delgado. Absorbiendo nutrientes.');
                             playSfx('absorb');
                         }
                         
-                        // Animate absorption microparticles bursting out
                         const absPos = absorptionParticles.geometry.attributes.position;
                         const absSpeed = absorptionParticles.userData.speedList;
                         absorptionParticles.material.opacity = 0.9;
@@ -1480,7 +1449,9 @@
                     }
                     else {
                         bolusMesh.material.color.setHex(0xc2858b);
-                        absorptionParticles.material.opacity = Math.max(0, absorptionParticles.material.opacity - 0.02);
+                        if (absorptionParticles) {
+                            absorptionParticles.material.opacity = Math.max(0, absorptionParticles.material.opacity - 0.02);
+                        }
                         if (state.activeOrgan !== 'large_int') setHighlightedOrgan('large_int');
                     }
                 }
@@ -1497,17 +1468,15 @@
         }
 
         // ==========================================================================
-        // 5. HUD TELEMETRY CONTROLLERS & OSCILLOSCOPE
+        // 5. INTERFAZ HUD TELEMETRÍA Y OSCILOSCOPIO 2D
         // ==========================================================================
         function setHighlightedOrgan(organKey) {
             state.activeOrgan = organKey;
-            
             const spec = organSpecs[organKey];
             DOM.valOrganName.textContent = spec.name;
             DOM.valOrganPh.textContent = organKey === 'stomach' ? state.phStomach.toFixed(1) : spec.ph;
             DOM.valEnzyme.textContent = spec.enzyme;
 
-            // Animate HUD bars
             DOM.barChemical.style.width = `${spec.chemical}%`;
             DOM.txtBarChemical.textContent = `${spec.chemical}%`;
 
@@ -1521,6 +1490,7 @@
         }
 
         function resizeOscilloscope() {
+            if(!oscilloscopeCanvas) return;
             const rect = oscilloscopeCanvas.parentElement.getBoundingClientRect();
             oscilloscopeCanvas.width = rect.width;
             oscilloscopeCanvas.height = rect.height;
@@ -1538,7 +1508,6 @@
             oscilloscopeCtx.fillStyle = 'rgba(0, 8, 20, 0.4)';
             oscilloscopeCtx.fillRect(0, 0, w, h);
 
-            // Circular curved oscilloscope trace styling
             oscilloscopeCtx.lineWidth = 2.0;
             oscilloscopeCtx.strokeStyle = state.endoscopyActive ? '#ff0055' : 'rgba(0, 243, 255, 0.8)';
             oscilloscopeCtx.shadowBlur = 6;
@@ -1559,40 +1528,22 @@
             oscilloscopeCtx.shadowBlur = 0;
         }
 
-        // --- INTERACTIVE EVENTS ---
-        DOM.initializeBtn.addEventListener('click', () => {
-            initAudio();
-            initThree();
-            DOM.splash.classList.add('hidden');
-            state.initialized = true;
-            logClinical('VISOR', 'Casco Goggles acoplado. Telemetría lista.');
-            drawOscilloscope();
-            playSfx('deglution');
-        });
-
-        // Ingest Button
+        // --- Eventos de Controles ---
         DOM.btnIngest.addEventListener('click', triggerFoodIngestion);
-        DOM.btnIngest.addEventListener('mouseenter', () => playSfx('hover'));
-
-        // Endoscopy Button
         DOM.btnEndoMode.addEventListener('click', toggleEndoscopyMode);
-        DOM.btnEndoMode.addEventListener('mouseenter', () => playSfx('hover'));
 
-        // pH Gágstrico Slider
         DOM.sldPh.addEventListener('input', (e) => {
             state.phStomach = parseFloat(e.target.value);
             DOM.lblPhVal.textContent = state.phStomach.toFixed(1);
             if (state.activeOrgan === 'stomach') {
                 DOM.valOrganPh.textContent = state.phStomach.toFixed(1);
             }
-            // Acid visual color reaction
             if (stomachAcidMesh) {
                 const factor = (state.phStomach - 1.0) / 5.5;
                 stomachAcidMesh.material.color.setRGB(1.0 - factor, factor, 0.0);
             }
         });
 
-        // Speed Peristalsis Slider
         DOM.sldSpeed.addEventListener('input', (e) => {
             state.peristalsisSpeed = parseFloat(e.target.value);
             DOM.lblSpeedVal.textContent = `${state.peristalsisSpeed.toFixed(1)}x`;
