@@ -3,28 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Horizon - Viajes Espaciales de Lujo</title>
+    <title>KRONOS - Haute Horlogerie | Calibres de Alta Precisión</title>
     <!-- Google Fonts Premium -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=Syne:wght@700;800&family=Share+Tech+Mono&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap">
     
     <style>
         /* ==========================================================================
-           ESTILOS GENERALES Y DISEÑO DE ULTRA-LUJO ESPACIAL
+           DISEÑO EDITORIAL DE ALTA GAMA (KRONOS)
            ========================================================================== */
         :root {
-            --font-display: 'Syne', sans-serif;
-            --font-body: 'Outfit', sans-serif;
-            --font-mono: 'Share Tech Mono', monospace;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Montserrat', sans-serif;
             
-            --clr-bg: #020208;
-            --clr-primary: #00f0ff;
-            --clr-primary-glow: rgba(0, 240, 255, 0.4);
-            --clr-accent: #ff6c00;
-            --clr-accent-glow: rgba(255, 108, 0, 0.4);
-            --clr-violet: #7000ff;
+            --clr-bg: #09090a;
+            --clr-gold: #dfba73;
+            --clr-gold-rose: #e5a993;
+            --clr-platinum: #cbd5e1;
+            --clr-text-muted: #8e8e93;
             
-            --transition-smooth: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            --transition-quick: all 0.2s ease;
+            --transition-luxury: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         * {
@@ -34,1020 +31,636 @@
         }
 
         body, html {
-            width: 100%; height: 100%;
+            width: 100%;
             background-color: var(--clr-bg);
             color: #ffffff;
-            font-family: var(--font-body);
+            font-family: var(--font-sans);
             overflow-x: hidden;
-            scroll-behavior: smooth;
         }
 
-        /* Ambient glows and star grid */
-        .space-bg {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: 
-                radial-gradient(circle at 10% 20%, rgba(112, 0, 255, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(0, 240, 255, 0.05) 0%, transparent 50%),
-                linear-gradient(rgba(255, 255, 255, 0.005) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.005) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 80px 80px, 80px 80px;
-            pointer-events: none;
-            z-index: 1;
-        }
-
+        /* 3D Canvas fixed behind scrolling text content */
         #canvas3d {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 2;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
             pointer-events: auto;
         }
 
-        /* --- THEMES STYLE CLASSES --- */
-        body.theme-nebula {
-            --clr-primary: #00f0ff;
-            --clr-violet: #7000ff;
-        }
-        body.theme-supernova {
-            --clr-primary: #ff6c00;
-            --clr-violet: #ff0055;
-            --clr-primary-glow: rgba(255, 108, 0, 0.4);
-        }
-        body.theme-void {
-            --clr-primary: #a8a8a8;
-            --clr-violet: #151525;
-            --clr-primary-glow: rgba(168, 168, 168, 0.2);
+        /* Ambient studio lighting shadow overlay */
+        .vignette-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 30%, rgba(9, 9, 10, 0.95) 90%);
+            pointer-events: none;
+            z-index: 2;
         }
 
-        /* --- FULL PAGE LAYOUT --- */
-        .content-container {
+        /* --- SCROLLING CONTENT SECTIONS --- */
+        .scroll-wrapper {
             position: relative;
             width: 100%;
             z-index: 10;
-            pointer-events: none; /* Let clicks pass to 3D canvas */
+            pointer-events: none; /* Let clicks pass to 3D canvas when needed */
         }
 
-        /* Navigation Bar */
-        .navbar {
-            position: fixed;
-            top: 0; left: 0; width: 100%;
-            height: 90px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 60px;
-            z-index: 100;
-            pointer-events: auto;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-            background: linear-gradient(180deg, rgba(2, 2, 8, 0.8) 0%, transparent 100%);
-        }
-
-        .brand {
-            font-family: var(--font-display);
-            font-weight: 800;
-            font-size: 1.4rem;
-            letter-spacing: 2px;
-            color: #ffffff;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand .logo-orb {
-            width: 12px; height: 12px;
-            background: var(--clr-primary);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--clr-primary);
-            animation: pulse-logo 2s infinite alternate;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 40px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: #8a8ab0;
-            text-decoration: none;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 600;
-            transition: var(--transition-quick);
-            position: relative;
-            padding-bottom: 6px;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            color: #ffffff;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            width: 0; height: 1px;
-            bottom: 0; left: 50%;
-            background: var(--clr-primary);
-            transition: var(--transition-smooth);
-            transform: translateX(-50%);
-        }
-
-        .nav-links a:hover::after, .nav-links a.active::after {
+        section {
             width: 100%;
-        }
-
-        /* --- HERO SECTION --- */
-        .hero-section {
-            width: 100%;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             align-items: center;
-            padding: 0 100px;
+            padding: 100px 10%;
             position: relative;
-        }
-
-        .hero-info {
-            max-width: 580px;
-            pointer-events: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .tagline {
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-            letter-spacing: 6px;
-            color: var(--clr-primary);
-            text-transform: uppercase;
-            text-shadow: 0 0 10px var(--clr-primary-glow);
-        }
-
-        .main-title {
-            font-family: var(--font-display);
-            font-size: 4.8rem;
-            font-weight: 900;
-            line-height: 1.05;
-            text-transform: uppercase;
-            letter-spacing: -1px;
-        }
-
-        .main-title span {
-            color: transparent;
-            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
-        }
-
-        .hero-desc {
-            font-size: 1.05rem;
-            color: #8c8cab;
-            line-height: 1.7;
-            font-weight: 300;
-        }
-
-        /* Futuristic Action Button */
-        .cta-btn {
-            background: linear-gradient(135deg, var(--clr-primary), var(--clr-violet));
-            color: #020208;
-            border: none;
-            padding: 18px 38px;
-            font-family: var(--font-sci-fi);
-            font-weight: 900;
-            font-size: 0.95rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 4px;
-            align-self: flex-start;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0, 240, 255, 0.15);
-            transition: var(--transition-smooth);
-        }
-
-        .cta-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px var(--clr-primary-glow);
-            color: #ffffff;
-        }
-
-        /* --- FLOATING PLANETARY CONSOLE PANEL --- */
-        .planetary-console {
-            position: absolute;
-            right: 80px; top: 180px;
-            width: 290px;
-            background: rgba(4, 4, 15, 0.55);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 240, 255, 0.18);
-            border-radius: 8px;
-            padding: 22px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            pointer-events: auto;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.02);
-            transition: var(--transition-smooth);
-        }
-
-        .console-header {
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            color: var(--clr-primary);
-            letter-spacing: 2px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .console-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.82rem;
-            color: #7b7b9e;
-        }
-
-        .console-val {
-            color: #ffffff;
-            font-family: var(--font-mono);
-            font-weight: bold;
-        }
-
-        /* Modulator Custom Buttons inside console */
-        .spectrum-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-
-        .spectrum-btn {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #7b7b9e;
-            padding: 8px 4px;
-            font-family: var(--font-mono);
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: var(--transition-quick);
-            text-align: center;
-        }
-
-        .spectrum-btn:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-        }
-
-        .spectrum-btn.active {
-            border-color: var(--clr-primary);
-            background: rgba(0, 240, 255, 0.08);
-            color: #ffffff;
-            box-shadow: 0 0 10px var(--clr-primary-glow);
-        }
-
-        /* Mini sound waveform visualizer inside console */
-        .console-visualizer {
-            width: 100%; height: 50px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        /* --- INTRO CINEMATIC SCREEN (CRITICAL AUTOPLAY SECURITY) --- */
-        .intro-splash {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #06061c 0%, #010104 100%);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 40px;
-            transition: opacity 1.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .intro-splash.hidden {
-            opacity: 0;
             pointer-events: none;
         }
 
-        .splash-title {
-            text-align: center;
+        .content-box {
+            max-width: 550px;
+            pointer-events: auto; /* Re-enable clicks for text panels and buttons */
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            opacity: 1;
+            transform: translateY(0);
+            transition: var(--transition-luxury);
         }
 
-        .splash-pre {
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-            letter-spacing: 12px;
-            color: var(--clr-primary);
-            margin-bottom: 15px;
-            animation: pulse-logo 2.5s infinite alternate;
+        /* --- HEADER NAVIGATION --- */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 80px;
+            z-index: 100;
+            pointer-events: auto;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            background: linear-gradient(180deg, rgba(9, 9, 10, 0.9) 0%, transparent 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
-        .splash-main {
-            font-family: var(--font-display);
-            font-size: 3.5rem;
-            font-weight: 900;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            background: linear-gradient(180deg, #ffffff 40%, rgba(0, 240, 255, 0.25) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .splash-btn {
-            background: transparent;
-            border: 2px solid var(--clr-primary);
-            color: var(--clr-primary);
-            font-family: var(--font-sci-fi);
-            font-weight: bold;
-            font-size: 1.05rem;
+        .brand {
+            font-family: var(--font-serif);
+            font-size: 1.8rem;
             letter-spacing: 4px;
-            padding: 16px 45px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-            box-shadow: 0 0 25px rgba(0, 240, 255, 0.12);
-        }
-
-        .splash-btn:hover {
-            background: var(--clr-primary);
-            color: #020208;
-            box-shadow: 0 0 45px var(--clr-primary);
-            transform: scale(1.04);
-        }
-
-        .splash-instruction {
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: #555577;
-            letter-spacing: 2px;
+            color: #ffffff;
             text-transform: uppercase;
+            text-decoration: none;
+            font-weight: 700;
         }
 
-        /* --- KEYFRAME ANIMATIONS --- */
-        @keyframes pulse-logo {
-            0% { opacity: 0.4; box-shadow: 0 0 5px var(--clr-primary); }
-            100% { opacity: 1; box-shadow: 0 0 18px var(--clr-primary); }
+        .nav-menu {
+            display: flex;
+            gap: 45px;
+            list-style: none;
         }
 
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
+        .nav-menu a {
+            color: var(--clr-text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 600;
+            transition: color 0.3s ease;
         }
 
-        @keyframes fade-in-up {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        .nav-menu a:hover, .nav-menu a.active {
+            color: var(--clr-gold);
+        }
+
+        /* --- SECTION 1: HERO ATELIER --- */
+        .tagline {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            color: var(--clr-gold);
+            font-weight: 600;
+        }
+
+        .title-large {
+            font-family: var(--font-serif);
+            font-size: 5rem;
+            line-height: 1.05;
+            font-weight: 400;
+            color: #ffffff;
+        }
+
+        .title-large em {
+            font-family: var(--font-serif);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--clr-text-muted);
+        }
+
+        .paragraph {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: var(--clr-text-muted);
+            font-weight: 300;
+        }
+
+        .luxury-btn {
+            background: transparent;
+            border: 1px solid var(--clr-gold);
+            color: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 16px 36px;
+            cursor: pointer;
+            align-self: flex-start;
+            transition: var(--transition-luxury);
+        }
+
+        .luxury-btn:hover {
+            background: #ffffff;
+            color: var(--clr-bg);
+            border-color: #ffffff;
+        }
+
+        /* --- SECTION 2: THE EXPLODED CALIBER --- */
+        .caliber-specs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 25px;
+        }
+
+        .spec-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .spec-num {
+            font-family: var(--font-serif);
+            font-size: 2.2rem;
+            color: var(--clr-gold);
+        }
+
+        .spec-lbl {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--clr-text-muted);
+        }
+
+        /* --- SECTION 3: ATELIER CONFIGURATOR --- */
+        .selector-box {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .metal-btn-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .metal-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            padding: 14px 22px;
+            border-radius: 2px;
+            font-family: var(--font-sans);
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .metal-btn:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .metal-btn.active {
+            border-color: var(--clr-gold);
+            background: rgba(223, 186, 115, 0.08);
+            color: var(--clr-gold);
+        }
+
+        /* --- FOOTER ATELIER INFO --- */
+        .atelier-footer {
+            width: 100%;
+            height: 120px;
+            border-top: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10%;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #555558;
+            position: relative;
+            z-index: 10;
+            background: #09090a;
         }
 
         /* --- Responsive Viewports --- */
         @media (max-width: 1024px) {
-            .navbar { padding: 0 30px; }
-            .hero-section { padding: 0 40px; justify-content: center; }
-            .hero-info { max-width: 100%; text-align: center; align-items: center; }
-            .cta-btn { align-self: center; }
-            .planetary-console {
-                position: relative;
-                right: auto; top: auto;
-                margin: 40px auto;
-                width: 90%;
-            }
+            .navbar { padding: 0 40px; }
+            section { padding: 100px 8%; }
+            .title-large { font-size: 3.8rem; }
         }
     </style>
 </head>
-<body class="theme-nebula">
+<body>
 
-    <!-- Glowing spaces background overlay -->
-    <div class="space-bg"></div>
+    <!-- Background Cinematic Lighting -->
+    <div class="vignette-overlay"></div>
 
-    <!-- WebGL Rendering Canvas (Three.js) -->
+    <!-- 3D Mechanical Caliber Viewport -->
     <canvas id="canvas3d"></canvas>
 
-    <!-- INTRO CINEMATIC SCREEN FOR AUDIO BYPASS -->
-    <div id="introScreen" class="intro-splash">
-        <div class="splash-title">
-            <div class="splash-pre">Nova Horizon Space Agency</div>
-            <div class="splash-main">AETHER VOYAGES</div>
-        </div>
-        <button id="enterBtn" class="splash-btn">Ingresar a Nova Horizon</button>
-        <div class="splash-instruction">Activa audio procedural y holografía 3D</div>
-    </div>
-
-    <!-- MAIN IMMERSIVE CONTENT WRAPPER -->
-    <div class="content-container">
+    <!-- MAIN EDITORIAL CONTENT LAYER -->
+    <div class="scroll-wrapper">
         
-        <!-- Header Navigation Menu -->
+        <!-- Premium Navigation Header -->
         <nav class="navbar">
-            <div class="brand">
-                <span class="logo-orb"></span>
-                <span>Nova Horizon</span>
-            </div>
-            <ul class="nav-links">
-                <li><a href="#" class="active">Charter</a></li>
-                <li><a href="#">Exoplanetas</a></li>
-                <li><a href="#">Servicios</a></li>
-                <li><a href="#">Reservas</a></li>
+            <a href="#" class="brand">Kronos</a>
+            <ul class="nav-menu">
+                <li><a href="#atelier" class="active">Atelier</a></li>
+                <li><a href="#caliber">Calibre</a></li>
+                <li><a href="#noble">Metales</a></li>
             </ul>
         </nav>
 
-        <!-- Main Hero Landing Content -->
-        <main class="hero-section">
-            <div class="hero-info">
-                <div class="tagline">Turismo de Lujo Interestelar</div>
-                <h1 class="main-title">CONQUISTA EL <span>VACÍO</span></h1>
-                <p class="hero-desc">
-                    Emprende un viaje sin precedentes a Proxima-Centauri d. Admira sus océanos bioluminiscentes de plasma y sus majestuosos anillos de polvo estelar desde la comodidad de una cápsula de gravedad modulada de ultra-lujo.
+        <!-- SECTION 1: HERO LANDING -->
+        <section id="atelier">
+            <div class="content-box">
+                <div class="tagline">Manufacture Horlogère Suisse</div>
+                <h1 class="title-large">CALIBRE <em>X-1</em></h1>
+                <p class="paragraph">
+                    La máxima expresión de la precisión micro-mecánica. Concebido en los Alpes suizos, el Calibre X-1 combina la estética estructural contemporánea con la maestría clásica de la oscilación armónica. Un tributo al tiempo y a la materia.
                 </p>
-                <button class="cta-btn" id="btnCta">Explorar Vuelos</button>
-            </div>
-        </main>
-
-        <!-- FLOATING PLANETARY CONSOLE MODULATOR -->
-        <section class="planetary-console">
-            <div class="console-header">Especímetro Planetario</div>
-            
-            <div class="console-row">
-                <span>Destino:</span>
-                <span class="console-val" style="color: var(--clr-primary);">Centauri d</span>
-            </div>
-
-            <div class="console-row">
-                <span>Distancia Solar:</span>
-                <span class="console-val">4.24 AL</span>
-            </div>
-
-            <div class="console-row">
-                <span>Gravedad:</span>
-                <span class="console-val">0.82 G</span>
-            </div>
-
-            <div class="console-header">Modulador de Espectro</div>
-            
-            <div class="spectrum-grid">
-                <button class="spectrum-btn active" data-theme="nebula">Nébula</button>
-                <button class="spectrum-btn" data-theme="supernova">Nova</button>
-                <button class="spectrum-btn" data-theme="void">Vació</button>
-            </div>
-
-            <div class="console-header">Onda de Audio Espacial</div>
-            <div class="console-visualizer">
-                <canvas id="oscilloscope"></canvas>
+                <button class="luxury-btn">Descubrir Calibre</button>
             </div>
         </section>
 
-        <!-- BOTTOM CONSOLE FEED LOGGER -->
-        <div class="hud-bottom" style="position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 100;">
-            <div class="medical-console ui-panel-interactive" id="consoleFeed" style="border-radius: 8px 8px 0 0; width: 420px;">
-                <div class="console-line">
-                    <span class="tag">[AETHER]</span>
-                    <span class="txt">Sistemas listos. Coordenadas fijadas en Proxima-Centauri d.</span>
+        <!-- SECTION 2: EXPLODED VIEW SPECIFICATIONS (SCROLL INTERACTIVE TRIGGER) -->
+        <section id="caliber">
+            <div class="content-box" style="margin-left: auto;">
+                <div class="tagline">Ingeniería del Volante</div>
+                <h1 class="title-large">DISECCIÓN <em>3D</em></h1>
+                <p class="paragraph">
+                    Desliza para ver la anatomía interna de los engranajes. Nuestra manufactura permite un despiece en capas simétricas del barrilete, los puentes de transmisión y el volante de inercia, revelando un ballet metálico sincronizado.
+                </p>
+                <div class="caliber-specs">
+                    <div class="spec-item">
+                        <span class="spec-num">28,800</span>
+                        <span class="spec-lbl">Alternancias / h</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-num">37</span>
+                        <span class="spec-lbl">Rubíes Sintéticos</span>
+                    </div>
+                    <div class="spec-item" style="grid-column: span 2;">
+                        <span class="spec-num">72 Horas</span>
+                        <span class="spec-lbl">Reserva de Marcha Sólida</span>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- SECTION 3: METALLURGICAL CONFIGURATOR -->
+        <section id="noble">
+            <div class="content-box">
+                <div class="tagline">Metales Nobles</div>
+                <h1 class="title-large">EL CALIBRE, <em>A TU ELECCIÓN</em></h1>
+                <p class="paragraph">
+                    Elige la metalurgia de tu mecanismo de alta relojería. Cambia en tiempo real las reflexiones y el acabado del calibre para que coincida con tu visión del lujo clásico, contemporáneo o platino cepillado.
+                </p>
+                <div class="selector-box">
+                    <span class="spec-lbl">Selecciona Acabado Calibre</span>
+                    <div class="metal-btn-group">
+                        <button class="metal-btn active" data-metal="gold">Oro Champaña</button>
+                        <button class="metal-btn" data-metal="rose">Oro Rosa</button>
+                        <button class="metal-btn" data-metal="platinum">Platino</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Elegant Heritage Footer -->
+        <footer class="atelier-footer">
+            <span>© 2026 Kronos Haute Horlogerie SA. Todos los derechos reservados.</span>
+            <span>Ginebra, Suiza</span>
+        </footer>
 
     </div>
 
-    <!-- WebGL Libraries -->
+    <!-- WebGL Rendering Libraries (Three.js estables) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // --- System State parameters ---
+        // --- Technical Configurations ---
         const state = {
             initialized: false,
-            theme: 'nebula', // 'nebula', 'supernova', 'void'
-            planetSpeed: 1.0,
-            volume: 0.6,
-            lightRotation: 0,
-            mouseX: 0, mouseY: 0 // Parallax tracking
+            metal: 'gold', // 'gold', 'rose', 'platinum'
+            scrollY: 0,
+            targetScrollY: 0
         };
 
-        const themeData = {
-            nebula: {
-                primary: '#00f0ff',
-                violet: '#7000ff',
-                planetColor: '#1a3c6e',
-                atmosphereColor: '#00f0ff',
-                glowColor: '#00f0ff'
+        const metalColors = {
+            gold: {
+                main: '#dfba73',
+                roughness: 0.16,
+                metalness: 0.92
             },
-            supernova: {
-                primary: '#ff6c00',
-                violet: '#ff0055',
-                planetColor: '#70220c',
-                atmosphereColor: '#ff4c00',
-                glowColor: '#ff6c00'
+            rose: {
+                main: '#e5a993',
+                roughness: 0.18,
+                metalness: 0.9
             },
-            void: {
-                primary: '#a8a8a8',
-                violet: '#151525',
-                planetColor: '#1d1d29',
-                atmosphereColor: '#444455',
-                glowColor: '#888888'
+            platinum: {
+                main: '#cbd5e1',
+                roughness: 0.22,
+                metalness: 0.85
             }
         };
 
-        // --- Three.js graphics ---
+        // --- Three.js variables ---
         let scene, camera, renderer, controls;
-        let starfield, planetMesh, planetAtmosphere, planetaryRings;
-        let pointLight1, pointLight2;
-        const particleTextureCache = {};
+        let mainGear, escapementWheel, balanceWheel, balanceSpring; // Caliber components
+        let bridgePlateTop, bridgePlateBottom;
+        let caliberGroup;
 
-        // --- Web Audio procedurals ---
-        let audioCtx = null, masterGainNode = null, analyser = null;
-        let ambientPadOsc1, ambientPadOsc2, padGain, lfoFilterNode;
-        let oscilloscopeCanvas, oscilloscopeCtx;
+        // Custom gear generator (Procedural teeth geometry!)
+        function createProceduralGearGeometry(outerRadius, innerRadius, thickness, teethCount) {
+            const geom = new THREE.Group();
+            
+            // Central disc rim
+            const rimGeom = new THREE.TorusGeometry((outerRadius + innerRadius)/2, (outerRadius - innerRadius)/2, 8, 48);
+            const rimMesh = new THREE.Mesh(rimGeom, new THREE.MeshStandardMaterial());
+            rimMesh.rotation.x = Math.PI / 2;
+            geom.add(rimMesh);
 
-        const DOM = {
-            introScreen: document.getElementById('introScreen'),
-            enterBtn: document.getElementById('enterBtn'),
-            consoleFeed: document.getElementById('consoleFeed'),
-            btnCta: document.getElementById('btnCta'),
-            spectrumButtons: document.querySelectorAll('.spectrum-btn')
-        };
-
-        function logSystem(tag, text) {
-            const timestamp = `[${new Date().toLocaleTimeString()}]`;
-            const line = document.createElement('div');
-            line.className = 'console-line';
-            line.innerHTML = `<span class="tag">${timestamp} [${tag}]</span><span class="txt">${text}</span>`;
-            DOM.consoleFeed.appendChild(line);
-            while (DOM.consoleFeed.children.length > 2) {
-                DOM.consoleFeed.removeChild(DOM.consoleFeed.firstChild);
+            // Connective spokes (radios)
+            const spokeGeom = new THREE.BoxGeometry(outerRadius * 2, thickness * 0.8, outerRadius * 0.15);
+            for (let i = 0; i < 3; i++) {
+                const spoke = new THREE.Mesh(spokeGeom, new THREE.MeshStandardMaterial());
+                spoke.rotation.y = (i * Math.PI) / 3;
+                geom.add(spoke);
             }
-        }
 
-        // Mouse Parallax listener
-        window.addEventListener('mousemove', (e) => {
-            state.mouseX = (e.clientX / window.innerWidth) - 0.5;
-            state.mouseY = (e.clientY / window.innerHeight) - 0.5;
-        });
-
-        // Initialize Launch
-        DOM.enterBtn.addEventListener('click', () => {
-            if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') {
-                DOM.enterBtn.textContent = "CARGANDO UNIVERSO...";
-                DOM.enterBtn.style.borderColor = "#ff6c00";
-                DOM.enterBtn.style.color = "#ff6c00";
+            // Individual gear teeth extruded procedurally
+            const teethWidth = (outerRadius * Math.PI) / teethCount * 0.8;
+            const toothGeom = new THREE.BoxGeometry(teethWidth, thickness, outerRadius * 0.15);
+            
+            for (let i = 0; i < teethCount; i++) {
+                const tooth = new THREE.Mesh(toothGeom, new THREE.MeshStandardMaterial());
+                const angle = (i / teethCount) * Math.PI * 2;
                 
-                const checkLoader = setInterval(() => {
-                    if (typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined') {
-                        clearInterval(checkLoader);
-                        launchAetherSystems();
-                    }
-                }, 150);
-            } else {
-                launchAetherSystems();
+                // Position tooth along outer rim circumference
+                tooth.position.set(outerRadius * Math.cos(angle), 0, outerRadius * Math.sin(angle));
+                tooth.rotation.y = -angle;
+                geom.add(tooth);
             }
-        });
 
-        function launchAetherSystems() {
-            try {
-                initAudio();
-            } catch(e) {
-                console.warn("AudioContext blocked by browser policy.");
-            }
-            initThree();
-
-            DOM.introScreen.classList.add('hidden');
-            state.initialized = true;
-            logSystem('SYSTEM', 'Líneas hiperespaciales sincronizadas.');
-            
-            if (analyser) {
-                drawOscilloscope();
-            }
-            
-            // Play initial launch SFX
-            playSfx('launch');
+            return geom;
         }
 
-        // ==========================================================================
-        // 1. PROCEDURAL SPACE-PAD SYNTHESIZER (WEB AUDIO)
-        // ==========================================================================
-        function initAudio() {
-            const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-            if (!AudioCtxClass) return;
-
-            audioCtx = new AudioCtxClass();
-            masterGainNode = audioCtx.createGain();
-            masterGainNode.gain.setValueAtTime(state.volume * 0.25, audioCtx.currentTime);
-
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            masterGainNode.connect(analyser);
-            analyser.connect(audioCtx.destination);
-
-            // Synthesize Deep Space Ambient Synth Pad (detuned triangle wave oscillators)
-            ambientPadOsc1 = audioCtx.createOscillator();
-            ambientPadOsc2 = audioCtx.createOscillator();
-            
-            ambientPadOsc1.type = 'triangle';
-            ambientPadOsc2.type = 'sawtooth';
-
-            // Detuned beautiful minor chord tone (C3 and G3 fifth chord)
-            ambientPadOsc1.frequency.setValueAtTime(130.81, audioCtx.currentTime); // C3
-            ambientPadOsc2.frequency.setValueAtTime(195.99, audioCtx.currentTime); // G3 (fifth note)
-            ambientPadOsc2.detune.setValueAtTime(8, audioCtx.currentTime); // slight detuning for rich chorus
-
-            // Bio-resonant lowpass filter to warm the synth
-            lfoFilterNode = audioCtx.createBiquadFilter();
-            lfoFilterNode.type = 'lowpass';
-            lfoFilterNode.frequency.setValueAtTime(150, audioCtx.currentTime);
-            lfoFilterNode.Q.setValueAtTime(5.0, audioCtx.currentTime);
-
-            // Filter Sweep LFO (breathes life into space pad)
-            const sweepLfo = audioCtx.createOscillator();
-            sweepLfo.type = 'sine';
-            sweepLfo.frequency.setValueAtTime(0.08, audioCtx.currentTime); // very slow 0.08 Hz sweep
-
-            const sweepLfoGain = audioCtx.createGain();
-            sweepLfoGain.gain.setValueAtTime(70, audioCtx.currentTime); // oscillates filter cutoff by 70Hz
-
-            sweepLfo.connect(sweepLfoGain);
-            sweepLfoGain.connect(lfoFilterNode.frequency);
-
-            padGain = audioCtx.createGain();
-            padGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
-
-            ambientPadOsc1.connect(lfoFilterNode);
-            ambientPadOsc2.connect(lfoFilterNode);
-            lfoFilterNode.connect(padGain);
-            padGain.connect(masterGainNode);
-
-            ambientPadOsc1.start();
-            ambientPadOsc2.start();
-            sweepLfo.start();
-
-            oscilloscopeCanvas = document.getElementById('oscilloscope');
-            oscilloscopeCtx = oscilloscopeCanvas.getContext('2d');
-            resizeOscilloscope();
-            window.addEventListener('resize', resizeOscilloscope);
-        }
-
-        function playSfx(type) {
-            if (!audioCtx) return;
-            const t = audioCtx.currentTime;
-
-            if (type === 'hover') {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(1200, t);
-                osc.frequency.exponentialRampToValueAtTime(1800, t + 0.06);
-                
-                gain.gain.setValueAtTime(0.012, t);
-                gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.06);
-                
-                osc.connect(gain);
-                gain.connect(masterGainNode);
-                osc.start(); osc.stop(t + 0.07);
-            }
-            else if (type === 'launch') {
-                // Giant space warp sweep (FM sweep up and down)
-                const carrier = audioCtx.createOscillator();
-                const mod = audioCtx.createOscillator();
-                const modGain = audioCtx.createGain();
-                const gain = audioCtx.createGain();
-
-                carrier.type = 'sawtooth';
-                carrier.frequency.setValueAtTime(60, t);
-                carrier.frequency.exponentialRampToValueAtTime(800, t + 0.4);
-                carrier.frequency.exponentialRampToValueAtTime(120, t + 1.2);
-
-                mod.type = 'sine';
-                mod.frequency.setValueAtTime(25, t);
-                modGain.gain.setValueAtTime(220, t);
-
-                gain.gain.setValueAtTime(0.35, t);
-                gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
-
-                mod.connect(modGain);
-                modGain.connect(carrier.frequency);
-                carrier.connect(gain);
-                gain.connect(masterGainNode);
-
-                carrier.start(); mod.start();
-                carrier.stop(t + 1.4); mod.stop(t + 1.4);
-            }
-        }
-
-        // ==========================================================================
-        // 2. BIOLUMINESCENT PLANET 3D SCENE (THREE.JS)
-        // ==========================================================================
-        function getParticleTexture(colorHex) {
-            if (particleTextureCache[colorHex]) return particleTextureCache[colorHex];
-            const canvas = document.createElement('canvas');
-            canvas.width = 64; canvas.height = 64;
-            const ctx = canvas.getContext('2d');
-            const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(0.2, '#ffffff');
-            grad.addColorStop(0.4, colorHex);
-            grad.addColorStop(0.8, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, 64, 64);
-            const texture = new THREE.CanvasTexture(canvas);
-            particleTextureCache[colorHex] = texture;
-            return texture;
-        }
-
-        // Draw planet continents procedural map using a Canvas texture!
-        function generateProceduralPlanetTexture(landColorHex, oceanColorHex) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            
-            // Draw ocean base
-            ctx.fillStyle = oceanColorHex;
-            ctx.fillRect(0, 0, 512, 256);
-            
-            // Generate glowing bioluminescent continents
-            ctx.fillStyle = landColorHex;
-            for (let i = 0; i < 20; i++) {
-                const rx = Math.random() * 512;
-                const ry = Math.random() * 256;
-                const rRadius = 30 + Math.random() * 65;
-                ctx.beginPath();
-                ctx.arc(rx, ry, rRadius, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // Capillaries and plasma lines
-            ctx.strokeStyle = '#00f0ff';
-            ctx.lineWidth = 1;
-            for(let i=0; i<8; i++) {
-                ctx.beginPath();
-                ctx.moveTo(Math.random() * 512, Math.random() * 256);
-                ctx.bezierCurveTo(Math.random()*512, Math.random()*256, Math.random()*512, Math.random()*256, Math.random()*512, Math.random()*256);
-                ctx.stroke();
-            }
-
-            const tex = new THREE.CanvasTexture(canvas);
-            return tex;
-        }
-
+        // Initialize 3D Haute Horlogerie Caliber
         function initThree() {
             const container = document.getElementById('canvas3d');
+            
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2('#020208', 0.05);
+            scene.fog = new THREE.FogExp2('#09090a', 0.04);
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-            camera.position.set(0, 0.2, 7.5);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            // Elegant diagonal camera perspective
+            camera.position.set(-2, 1.8, 6.2);
 
             renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.maxDistance = 12;
-            controls.minDistance = 3.5;
-            controls.enableZoom = true;
-            controls.autoRotate = false;
+            // Luxury Studio Lighting (Soft shadows, highly metallic reflections)
+            const mainLight = new THREE.DirectionalLight('#ffffff', 2.5);
+            mainLight.position.set(4, 8, 4);
+            scene.add(mainLight);
 
-            // Dramatic outer space lighting
-            const theme = themeData[state.theme];
-            
-            pointLight1 = new THREE.PointLight(theme.primary, 3.5, 25);
-            pointLight1.position.set(4, 3, 3);
-            scene.add(pointLight1);
+            const champaingBacklight = new THREE.DirectionalLight('#ffd59e', 1.2); // champaing light highlights
+            champaingBacklight.position.set(-4, -2, -3);
+            scene.add(champaingBacklight);
 
-            pointLight2 = new THREE.PointLight(theme.violet, 2.0, 30);
-            pointLight2.position.set(-5, -3, -4);
-            scene.add(pointLight2);
+            const floorGlow = new THREE.AmbientLight('#121217', 1.0);
+            scene.add(floorGlow);
 
-            const ambientLight = new THREE.AmbientLight('#07071d', 0.85);
-            scene.add(ambientLight);
+            // Caliber main parent group
+            caliberGroup = new THREE.Group();
+            scene.add(caliberGroup);
 
-            buildPlanetaryGlows();
-            buildInteractiveStarfield();
+            buildMechanicalCaliberComponents();
 
+            // Set default champaing gold metal finish
+            updateCaliberMetalProperties();
+
+            renderer.setAnimationLoop(renderLoop);
             window.addEventListener('resize', onWindowResize);
+            state.initialized = true;
         }
 
-        function buildPlanetaryGlows() {
-            if (planetMesh) scene.remove(planetMesh);
-            if (planetAtmosphere) scene.remove(planetAtmosphere);
-            if (planetaryRings) scene.remove(planetaryRings);
-
-            const theme = themeData[state.theme];
-
-            // 1. Exoplanet Core Sphere
-            const planetGeom = new THREE.SphereGeometry(1.6, 64, 64);
-            const planetMat = new THREE.MeshStandardMaterial({
-                color: theme.planetColor,
-                map: generateProceduralPlanetTexture(theme.planetColor, '#0a0a29'),
-                roughness: 0.25,
-                metalness: 0.15,
-                bumpScale: 0.05
-            });
-            planetMesh = new THREE.Mesh(planetGeom, planetMat);
-            scene.add(planetMesh);
-
-            // 2. Translucent Atmosphere Halo (Additive blending)
-            const atmoGeom = new THREE.SphereGeometry(1.68, 32, 32);
-            const atmoMat = new THREE.MeshBasicMaterial({
-                color: theme.atmosphereColor,
-                transparent: true,
-                opacity: 0.25,
-                blending: THREE.AdditiveBlending,
-                side: THREE.BackSide
-            });
-            planetAtmosphere = new THREE.Mesh(atmoGeom, atmoMat);
-            scene.add(planetAtmosphere);
-
-            // 3. Floating Space Ring System (Thousands of orbital particles)
-            const ringCount = 2000;
-            const ringGeom = new THREE.BufferGeometry();
-            const pos = new Float32Array(ringCount * 3);
-            const innerRadius = 2.4;
-            const outerRadius = 3.8;
-
-            for (let i = 0; i < ringCount; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const r = innerRadius + Math.random() * (outerRadius - innerRadius);
-                
-                pos[i*3] = r * Math.cos(angle);
-                pos[i*3+1] = (Math.random() - 0.5) * 0.08; // flat ring thickness
-                pos[i*3+2] = r * Math.sin(angle);
+        function buildMechanicalCaliberComponents() {
+            // Delete if rebuilding
+            while(caliberGroup.children.length > 0){ 
+                caliberGroup.remove(caliberGroup.children[0]); 
             }
 
-            ringGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            const ringMat = new THREE.PointsMaterial({
-                size: 0.07,
-                map: getParticleTexture(theme.primary),
-                transparent: true,
-                opacity: 0.7,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
-
-            planetaryRings = new THREE.Points(ringGeom, ringMat);
-            planetaryRings.rotation.x = Math.PI / 6; // inclined orbit rings
-            scene.add(planetaryRings);
-        }
-
-        function buildInteractiveStarfield() {
-            if (starfield) scene.remove(starfield);
-
-            const count = 1500;
-            const geom = new THREE.BufferGeometry();
-            const pos = new Float32Array(count * 3);
+            // 1. Core structural bridge plates (top and bottom)
+            const bridgeGeom = new THREE.CylinderGeometry(2.6, 2.6, 0.12, 6, 1, true); // hexagon hollow shape
+            const bridgeMat = new THREE.MeshStandardMaterial({ color: '#161619', roughness: 0.45, metalness: 0.1 });
             
-            for (let i = 0; i < count; i++) {
-                const r = 15 + Math.random() * 30;
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos((Math.random() * 2) - 1);
-                
-                pos[i*3] = r * Math.sin(phi) * Math.cos(theta);
-                pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-                pos[i*3+2] = r * Math.cos(phi);
+            bridgePlateTop = new THREE.Mesh(bridgeGeom, bridgeMat);
+            bridgePlateTop.position.y = 0.8;
+            caliberGroup.add(bridgePlateTop);
+
+            bridgePlateBottom = new THREE.Mesh(bridgeGeom, bridgeMat);
+            bridgePlateBottom.position.y = -0.8;
+            caliberGroup.add(bridgePlateBottom);
+
+            // 2. Large transmission gear (Main spring barrel representation)
+            mainGear = createProceduralGearGeometry(1.5, 0.4, 0.15, 36);
+            mainGear.position.set(0.6, 0.2, 0.2);
+            caliberGroup.add(mainGear);
+
+            // 3. Medium escapement wheel
+            escapementWheel = createProceduralGearGeometry(0.85, 0.2, 0.1, 24);
+            escapementWheel.position.set(-0.8, -0.15, -0.2);
+            caliberGroup.add(escapementWheel);
+
+            // 4. Large balance wheel (Oscillating regulating heart)
+            balanceWheel = new THREE.Group();
+            
+            const rimGeom = new THREE.TorusGeometry(1.2, 0.08, 12, 64);
+            const rim = new THREE.Mesh(rimGeom, new THREE.MeshStandardMaterial());
+            rim.rotation.x = Math.PI/2;
+            balanceWheel.add(rim);
+
+            // balance spoke bar
+            const spokeGeom = new THREE.BoxGeometry(2.3, 0.06, 0.15);
+            const spoke = new THREE.Mesh(spokeGeom, new THREE.MeshStandardMaterial());
+            balanceWheel.add(spoke);
+
+            balanceWheel.position.set(-0.4, 0.5, 0.5);
+            caliberGroup.add(balanceWheel);
+            
+            // 5. Delicate coiled helical balance spring (Toroidal spring mesh representation)
+            const springPoints = [];
+            for (let t = 0; t < Math.PI * 14; t += 0.1) {
+                // Expanding spiral coil
+                const r = 0.1 + (t / (Math.PI * 14)) * 0.45;
+                const x = r * Math.sin(t);
+                const y = Math.cos(t * 12) * 0.01; // tiny vertical waviness
+                const z = r * Math.cos(t);
+                springPoints.push(new THREE.Vector3(x, y, z));
             }
-
-            geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-            const mat = new THREE.PointsMaterial({
-                size: 0.08,
-                map: getCircleTexture('#ffffff'),
-                transparent: true,
-                opacity: 0.45,
-                blending: THREE.AdditiveBlending,
-                depthWrite: false
-            });
-
-            starfield = new THREE.Points(geom, mat);
-            scene.add(starfield);
+            const springPath = new THREE.CatmullRomCurve3(springPoints);
+            const springGeom = new THREE.TubeGeometry(springPath, 150, 0.02, 6, false);
+            
+            balanceSpring = new THREE.Mesh(
+                springGeom, 
+                new THREE.MeshStandardMaterial({ color: '#555559', roughness: 0.1, metalness: 0.9 })
+            );
+            balanceSpring.position.set(-0.4, 0.65, 0.5);
+            caliberGroup.add(balanceSpring);
         }
 
-        // Render Frame Loop
+        // Apply selected metal noble finish properties to gears
+        function updateCaliberMetalProperties() {
+            const metal = metalColors[state.metal];
+            
+            caliberGroup.traverse((node) => {
+                if (node.isMesh && node.material && node.material.type === 'MeshStandardMaterial') {
+                    // Do not recolor structural bridge plates or balance spring
+                    if (node !== bridgePlateTop && node !== bridgePlateBottom && node.parent !== balanceSpring) {
+                        node.material.color.set(metal.main);
+                        node.material.roughness = metal.roughness;
+                        node.material.metalness = metal.metalness;
+                        node.material.needsUpdate = true;
+                    }
+                }
+            });
+        }
+
+        // --- ANIMATION FRAME ENGINE ---
         function renderLoop(time) {
             const elapsed = time * 0.001;
 
-            if (controls) controls.update();
-
-            // Rotate exoplanet
-            if (planetMesh) {
-                planetMesh.rotation.y = elapsed * 0.05 * state.planetSpeed;
-                planetAtmosphere.rotation.y = elapsed * 0.06 * state.planetSpeed;
+            // 1. Oscillating Balance Wheel movement (Ticking Harmonic Sine Motion at 4Hz!)
+            // Ticks back and forth representing mechanical anchor regulation
+            const tickFrequency = Math.PI * 4; // 4Hz tick
+            const oscAngle = Math.sin(elapsed * tickFrequency) * 1.4; // 1.4 radians rotation amplitude
+            
+            if (balanceWheel) {
+                balanceWheel.rotation.y = oscAngle;
+            }
+            if (balanceSpring) {
+                balanceSpring.rotation.y = oscAngle * 0.9;
+                // spring dynamically expands/compresses slightly
+                const pulse = 1.0 + Math.sin(elapsed * tickFrequency) * 0.04;
+                balanceSpring.scale.set(pulse, 1.0, pulse);
             }
 
-            // Rotate dust rings
-            if (planetaryRings) {
-                planetaryRings.rotation.y = -elapsed * 0.04 * state.planetSpeed;
+            // 2. Continuous rotating gears meshing together smoothly
+            if (mainGear) {
+                mainGear.rotation.y = elapsed * 0.03; // slow rotation representation
+            }
+            if (escapementWheel) {
+                // Escapement spins faster in opposite direction
+                escapementWheel.rotation.y = -elapsed * 0.12;
             }
 
-            // Slow rotate stars background
-            if (starfield) {
-                starfield.rotation.y = elapsed * 0.005;
-            }
+            // ==========================================================================
+            // SCROLL-DRIVEN CINEMATIC 3D EXPLODED DISASSEMBLY SYSTEM
+            // ==========================================================================
+            // Interpolate scroll smoothly for organic lag-free movement (Lerp)
+            state.scrollY += (state.targetScrollY - state.scrollY) * 0.08;
+            
+            const maxScrollHeight = window.innerHeight * 2; // scroll depth coefficient
+            const scrollRatio = Math.min(1.0, state.scrollY / maxScrollHeight);
 
-            // Apply Mouse Parallax to camera for ultra-high immersive feeling
-            if (!state.endoscopyActive && camera) {
-                const targetX = state.mouseX * 2.2;
-                const targetY = state.mouseY * 1.5;
-                camera.position.x += (targetX - camera.position.x) * 0.05;
-                camera.position.y += (targetY - camera.position.y) * 0.05;
-            }
+            // Separate caliber components along Y-axis based on scroll ratio (Exploded view!)
+            if (state.initialized) {
+                // Top Bridge plate elevates
+                bridgePlateTop.position.y = 0.8 + (scrollRatio * 1.5);
+                
+                // Gears slide apart in different layers
+                mainGear.position.y = 0.2 + (scrollRatio * 0.4);
+                mainGear.position.z = 0.2 + (scrollRatio * 0.2);
+                
+                escapementWheel.position.y = -0.15 - (scrollRatio * 0.4);
+                escapementWheel.position.z = -0.2 - (scrollRatio * 0.2);
+                
+                balanceWheel.position.y = 0.5 + (scrollRatio * 0.8);
+                balanceSpring.position.y = 0.65 + (scrollRatio * 1.15);
 
-            // Animate dynamic point lights
-            if (pointLight1 && pointLight2) {
-                state.lightRotation += 0.004;
-                pointLight1.position.x = Math.sin(state.lightRotation) * 6;
-                pointLight1.position.z = Math.cos(state.lightRotation) * 6;
+                // Bottom Bridge plate descends
+                bridgePlateBottom.position.y = -0.8 - (scrollRatio * 1.5);
+
+                // Cinematic Camera smooth pan based on scroll ratio
+                // Camera tilts up and moves closer to inspect the exploded layers!
+                camera.position.x = -2 - (scrollRatio * 2.5);
+                camera.position.y = 1.8 + (scrollRatio * 1.2);
+                camera.position.z = 6.2 - (scrollRatio * 1.8);
+                camera.lookAt(new THREE.Vector3(0, 0, 0));
             }
 
             renderer.render(scene, camera);
         }
 
+        // Scroll listener updating target scroll position
+        window.addEventListener('scroll', () => {
+            state.targetScrollY = window.scrollY;
+
+            // Highlight nav links dynamically based on scroll sections
+            const scrollPos = window.scrollY;
+            const h = window.innerHeight;
+            
+            const links = document.querySelectorAll('.nav-menu a');
+            links.forEach(l => l.classList.remove('active'));
+
+            if (scrollPos < h * 0.7) {
+                links[0].classList.add('active'); // Atelier
+            } else if (scrollPos >= h * 0.7 && scrollPos < h * 1.5) {
+                links[1].classList.add('active'); // Caliber
+            } else {
+                links[2].classList.add('active'); // Noble Metals
+            }
+        });
+
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            resizeOscilloscope();
         }
 
-        function updatePlanetaryTheme() {
-            const theme = themeData[state.theme];
-            
-            buildPlanetaryGlows();
-            
-            pointLight1.color.set(theme.primary);
-            pointLight2.color.set(theme.violet);
-            
-            logSystem('SPECTRUM', `Modulando espectro estelar a: ${state.theme.toUpperCase()}`);
-        }
-
-        // ==========================================================================
-        // 3. HUD TELEMETRY & OSCILLOSCOPE
-        // ==========================================================================
-        function resizeOscilloscope() {
-            if(!oscilloscopeCanvas) return;
-            const rect = oscilloscopeCanvas.parentElement.getBoundingClientRect();
-            oscilloscopeCanvas.width = rect.width;
-            oscilloscopeCanvas.height = rect.height;
-        }
-
-        function drawOscilloscope() {
-            requestAnimationFrame(drawOscilloscope);
-            if (!analyser || !oscilloscopeCtx) return;
-            const w = oscilloscopeCanvas.width;
-            const h = oscilloscopeCanvas.height;
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteTimeDomainData(dataArray);
-
-            oscilloscopeCtx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-            oscilloscopeCtx.fillRect(0, 0, w, h);
-
-            oscilloscopeCtx.lineWidth = 2.0;
-            oscilloscopeCtx.strokeStyle = themeData[state.theme].primary;
-            oscilloscopeCtx.shadowBlur = 8;
-            oscilloscopeCtx.shadowColor = themeData[state.theme].primary;
-            oscilloscopeCtx.beginPath();
-
-            const sliceWidth = w * 1.0 / bufferLength;
-            let x = 0;
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * h / 2;
-                if (i === 0) oscilloscopeCtx.moveTo(x, y);
-                else oscilloscopeCtx.lineTo(x, y);
-                x += sliceWidth;
-            }
-            oscilloscopeCtx.lineTo(w, h/2);
-            oscilloscopeCtx.stroke();
-            oscilloscopeCtx.shadowBlur = 0;
-        }
-
-        // --- CONTROLS LISTENERS ---
-        DOM.btnCta.addEventListener('click', () => {
-            playSfx('launch');
-            logSystem('CHARTER', 'Reserva de vuelo charter de lujo iniciada.');
+        // Initialize 3D Engine on immediate page load
+        window.addEventListener('DOMContentLoaded', () => {
+            initThree();
         });
-        DOM.btnCta.addEventListener('mouseenter', () => playSfx('hover'));
 
-        // Modulators Grid Buttons
-        DOM.spectrumButtons.forEach(btn => {
-            btn.addEventListener('mouseenter', () => playSfx('hover'));
+        // Configurator Metals Button Triggers
+        document.querySelectorAll('.metal-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                DOM.spectrumButtons.forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.metal-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
 
-                // Remove existing theme classes from body
-                document.body.classList.remove('theme-nebula', 'theme-supernova', 'theme-void');
-                
-                state.theme = btn.dataset.theme;
-                document.body.classList.add(`theme-${state.theme}`);
-
-                if (state.initialized) {
-                    updatePlanetaryTheme();
-                }
+                state.metal = btn.dataset.metal;
+                updateCaliberMetalProperties();
             });
         });
     </script>
